@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Context is now sent via the `X-ZEN-CONTEXT` header on usage reports instead of the request body, matching the other SDKs and how the server actually reads it
 
 ### Fixed
+- `FlagManager.single()` now reports the default value on every usage report, not just when the flag falls back to it
 - `RuleEngine` no longer drops flags shaped as `{"value": ..., "type": ...}` in a map-keyed `flags` payload
 - `RuleEngine` now recognizes the `equals` comparer alias and underscore-spelled comparers like `starts_with`
 - `RuleEngine`'s `notnull` comparer now correctly fails (instead of matching) when the target attribute is absent

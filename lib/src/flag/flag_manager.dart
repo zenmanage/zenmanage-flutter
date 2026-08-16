@@ -97,11 +97,13 @@ class FlagManager {
     );
 
     if (flag != null) {
-      // Report usage in background
+      // Report usage in background, including the default value so it's
+      // recorded even when the flag was found and evaluated normally
       unawaited(_apiClient.reportUsage(
         flagKey: flagKey,
         flagValue: flag.value,
         context: _contexts.isNotEmpty ? _contexts.first : null,
+        defaultValue: defaultValue,
       ));
 
       return flag;

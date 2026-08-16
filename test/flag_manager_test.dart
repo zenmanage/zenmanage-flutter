@@ -200,9 +200,11 @@ void main() {
     late HttpServer server;
     late String endpoint;
     late List<HttpHeaders> usageHeaders;
+    late Map<String, dynamic> rulesPayload;
 
     setUp(() async {
       usageHeaders = [];
+      rulesPayload = {'flags': <String, dynamic>{}};
       server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
       endpoint = 'http://${server.address.address}:${server.port}';
 
@@ -218,7 +220,7 @@ void main() {
 
         if (request.uri.path == '/rules.json') {
           request.response.headers.contentType = ContentType.json;
-          request.response.write(jsonEncode({'flags': <String, dynamic>{}}));
+          request.response.write(jsonEncode(rulesPayload));
           await request.response.close();
           return;
         }
@@ -278,6 +280,23 @@ void main() {
 
       await waitForUsageReport();
       expect(usageHeaders.first.value('X-ZEN-DEFAULT-VALUE'), equals('{"missing-flag":"control"}'));
+    });
+
+    test('reports the default value even when the flag is found', () async {
+      rulesPayload = {
+        'flags': {
+          'new-dashboard': {'value': true, 'type': 'boolean'},
+        },
+      };
+      final manager = buildManager();
+
+      final flag = await manager.single('new-dashboard', defaultValue: false);
+
+      expect(flag.value, isTrue);
+
+      await waitForUsageReport();
+      expect(usageHeaders, hasLength(1));
+      expect(usageHeaders.first.value('X-ZEN-DEFAULT-VALUE'), equals('{"new-dashboard":false}'));
     });
   });
 }
