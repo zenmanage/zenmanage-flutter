@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      MIN_LINE_COVERAGE: 90
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: stable
+          channel: stable
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Test
+        run: flutter test --coverage
+
+      - name: Enforce coverage gate
+        run: |
+          if [[ ! -f coverage/lcov.info ]]; then
+            echo "coverage/lcov.info not found"
+            exit 1
+          fi
+
+          RATE=$(awk '
+            BEGIN { FS=":"; lines_found=0; lines_hit=0 }
+            /^LF:/ { lines_found += $2 }
+            /^LH:/ { lines_hit += $2 }
+            END {
+              if (lines_found == 0) {
+                print "0.00"
+              } else {
+                printf "%.2f", (lines_hit / lines_found) * 100
+              }
+            }
+          ' coverage/lcov.info)
+
+          echo "Line coverage: ${RATE}%"
+          awk -v actual="$RATE" -v min="$MIN_LINE_COVERAGE" 'BEGIN {
+            if (actual + 0 < min + 0) {
+              printf("Coverage gate failed: %.2f%% < %.2f%%\n", actual, min);
+              exit 1;
+            }
+            printf("Coverage gate passed: %.2f%% >= %.2f%%\n", actual, min);
+          }'
+
+      - name: Validate package publishability
+        run: flutter pub publish --dry-run

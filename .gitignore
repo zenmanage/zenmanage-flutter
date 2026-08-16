@@ -1,0 +1,21 @@
+# Dart/Flutter
+.dart_tool/
+.packages
+.pub/
+pubspec.lock
+
+# Flutter
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# Coverage
+coverage/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# macOS
+.DS_Store
