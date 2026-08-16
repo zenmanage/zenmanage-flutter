@@ -69,7 +69,7 @@ void main() {
 
       await waitForUsageReport();
       expect(usageHeaders, hasLength(1));
-      expect(usageHeaders.first.value('X-Default-Value'), equals('{"missing-flag":true}'));
+      expect(usageHeaders.first.value('X-ZEN-DEFAULT-VALUE'), equals('{"missing-flag":true}'));
     });
 
     test('throws FlagNotFoundException when no defaultValue is supplied and flag is missing', () async {
@@ -90,7 +90,7 @@ void main() {
       expect(flag.type, equals('string'));
 
       await waitForUsageReport();
-      expect(usageHeaders.first.value('X-Default-Value'), equals('{"missing-flag":"control"}'));
+      expect(usageHeaders.first.value('X-ZEN-DEFAULT-VALUE'), equals('{"missing-flag":"control"}'));
     });
   });
 }

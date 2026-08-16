@@ -1,4 +1,4 @@
-/// Tests for exception classes
+// Tests for exception classes
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zenmanage/zenmanage.dart';
 

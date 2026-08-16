@@ -1,4 +1,4 @@
-/// Tests for Flag model
+// Tests for Flag model
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zenmanage/zenmanage.dart';
 
@@ -223,7 +223,7 @@ void main() {
 
     group('getValue', () {
       test('returns the raw value', () {
-        final value = 'raw value';
+        const value = 'raw value';
         final flag = Flag(key: 'test', value: value, type: 'string');
         expect(flag.getValue(), equals(value));
       });

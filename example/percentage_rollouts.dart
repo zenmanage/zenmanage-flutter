@@ -1,6 +1,7 @@
-/// Percentage rollouts example
-///
-/// This example demonstrates gradual feature rollouts using percentage-based targeting.
+// ignore_for_file: avoid_print -- these scripts print to demonstrate output.
+// Percentage rollouts example
+//
+// This example demonstrates gradual feature rollouts using percentage-based targeting.
 
 import 'package:zenmanage/zenmanage.dart';
 
@@ -32,7 +33,7 @@ Future<void> main() async {
       print('   User $userId: ${flag.isEnabled() ? 'enabled' : 'disabled'}');
     }
 
-    print();
+    print('');
 
     // Example 2: Progressive rollout strategy
     print('2. Progressive Rollout Strategy\n');
@@ -53,7 +54,7 @@ Future<void> main() async {
           '(${phase['users']} users)');
     }
 
-    print();
+    print('');
 
     // Example 3: Segment-based rollout
     print('3. Segment-Based Rollout\n');
@@ -83,7 +84,7 @@ Future<void> main() async {
           '(${segment['percentage']}%)');
     }
 
-    print();
+    print('');
 
     // Example 4: Beta program (opt-in)
     print('4. Beta Program (Opt-In)\n');
@@ -105,7 +106,7 @@ Future<void> main() async {
       print('   $userId: ${flag.isEnabled() ? 'enrolled' : 'not enrolled'}');
     }
 
-    print();
+    print('');
 
     // Example 5: Canary deployment
     print('5. Canary Deployment\n');

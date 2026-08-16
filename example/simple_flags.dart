@@ -1,6 +1,7 @@
-/// Simple flags example
-///
-/// This example demonstrates basic flag retrieval and type-safe value access.
+// ignore_for_file: avoid_print -- these scripts print to demonstrate output.
+// Simple flags example
+//
+// This example demonstrates basic flag retrieval and type-safe value access.
 
 import 'package:zenmanage/zenmanage.dart';
 

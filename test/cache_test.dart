@@ -1,4 +1,4 @@
-/// Tests for cache implementations
+// Tests for cache implementations
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zenmanage/zenmanage.dart';
 
@@ -72,7 +72,6 @@ void main() {
     test('clear completes successfully', () async {
       final cache = NullCache();
 
-      expect(() => cache.clear(), isNot(throwsException));
       await cache.clear();
     });
 

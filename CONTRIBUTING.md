@@ -254,7 +254,7 @@ example/
 
 ## Release Process
 
-See [docs/PUBLISHING.md](docs/PUBLISHING.md) for the full release process.
+See [doc/PUBLISHING.md](doc/PUBLISHING.md) for the full release process.
 
 ## Questions?
 

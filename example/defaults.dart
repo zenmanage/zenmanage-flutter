@@ -1,6 +1,7 @@
-/// Defaults and error handling example
-///
-/// This example demonstrates using default values and handling missing flags gracefully.
+// ignore_for_file: avoid_print -- these scripts print to demonstrate output.
+// Defaults and error handling example
+//
+// This example demonstrates using default values and handling missing flags gracefully.
 
 import 'package:zenmanage/zenmanage.dart';
 
@@ -111,7 +112,7 @@ Future<void> main() async {
       }
     }
 
-    print();
+    print('');
 
     // Example 7: Safe type conversions
     print('7. Safe Type Conversions\n');

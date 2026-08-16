@@ -1,6 +1,7 @@
-/// A/B Testing example
-///
-/// This example demonstrates using Zenmanage for A/B testing and experimentation.
+// ignore_for_file: avoid_print -- these scripts print to demonstrate output.
+// A/B Testing example
+//
+// This example demonstrates using Zenmanage for A/B testing and experimentation.
 
 import 'package:zenmanage/zenmanage.dart';
 
@@ -17,7 +18,7 @@ Future<void> main() async {
     // Example 1: Checkout flow A/B test
     print('1. Checkout Flow Variant Assignment\n');
 
-    final userId = 'user_789';
+    const userId = 'user_789';
     final userContext = Context.user(
       id: userId,
       name: 'Alice Smith',
@@ -42,7 +43,7 @@ Future<void> main() async {
       print('   Using optimized checkout (v2)');
     }
 
-    print();
+    print('');
 
     // Example 2: Conversion tracking for A/B test
     print('2. Tracking Test Results\n');

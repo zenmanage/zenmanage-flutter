@@ -2,7 +2,6 @@
 library zenmanage.rule_engine;
 
 import 'dart:convert';
-import 'dart:math';
 
 import 'context/context.dart';
 import 'flag/flag.dart';
@@ -152,8 +151,24 @@ class RuleEngine {
         final value = entry.value;
         if (value is Map) {
           final map = Map<String, dynamic>.from(value);
-          map.putIfAbsent('key', () => entry.key.toString());
-          return map;
+          if (map.containsKey('target') || map.containsKey('rules') || map.containsKey('rollout')) {
+            map.putIfAbsent('key', () => entry.key.toString());
+            return map;
+          }
+
+          // Simplified shape: {"value": ..., "type": ...} directly, without
+          // the nested target/rules/rollout structure.
+          final rawValue = map['value'];
+          return <String, dynamic>{
+            'key': entry.key.toString(),
+            'target': <String, dynamic>{
+              'value': <String, dynamic>{
+                'value': rawValue,
+              },
+            },
+            'type': map['type']?.toString() ?? _inferType(rawValue),
+            'rules': const <Map<String, dynamic>>[],
+          };
         }
 
         return <String, dynamic>{
@@ -277,7 +292,9 @@ class RuleEngine {
 
       final actual = context.attributes[subtype];
       if (actual == null) {
-        return comparer == 'isnull' || comparer.startsWith('not');
+        if (comparer == 'isnull') return true;
+        if (comparer == 'notnull') return false;
+        return comparer.startsWith('not');
       }
 
       final actualValues = _toValueList(actual);
@@ -318,7 +335,9 @@ class RuleEngine {
 
     final actual = context.attributes[selector];
     if (actual == null) {
-      return comparer == 'isnull' || comparer.startsWith('not');
+      if (comparer == 'isnull') return true;
+      if (comparer == 'notnull') return false;
+      return comparer.startsWith('not');
     }
 
     final actualValues = _toValueList(actual);
@@ -407,9 +426,15 @@ class RuleEngine {
       base = normalized;
     }
 
+    // Comparer names arrive in a few equivalent spellings (e.g. "equals" vs
+    // "equal", "starts_with" vs "startswith") — collapse underscores so a
+    // single set of switch cases handles all of them.
+    final baseKey = base.replaceAll('_', '');
+
     bool result;
-    switch (base) {
+    switch (baseKey) {
       case 'equal':
+      case 'equals':
         result = '$actual' == expectedRaw;
         break;
       case 'contains':

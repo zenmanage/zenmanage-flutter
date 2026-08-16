@@ -1,6 +1,7 @@
-/// Context-based flags example
-///
-/// This example demonstrates using context for personalized flag evaluation.
+// ignore_for_file: avoid_print -- these scripts print to demonstrate output.
+// Context-based flags example
+//
+// This example demonstrates using context for personalized flag evaluation.
 
 import 'package:zenmanage/zenmanage.dart';
 
