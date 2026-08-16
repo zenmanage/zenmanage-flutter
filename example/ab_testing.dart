@@ -42,7 +42,7 @@ Future<void> main() async {
       print('   Using optimized checkout (v2)');
     }
 
-    print();
+    print('');
 
     // Example 2: Conversion tracking for A/B test
     print('2. Tracking Test Results\n');

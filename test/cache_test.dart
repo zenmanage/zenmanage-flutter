@@ -72,7 +72,6 @@ void main() {
     test('clear completes successfully', () async {
       final cache = NullCache();
 
-      expect(() => cache.clear(), isNot(throwsException));
       await cache.clear();
     });
 

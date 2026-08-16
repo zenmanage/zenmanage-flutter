@@ -111,7 +111,7 @@ Future<void> main() async {
       }
     }
 
-    print();
+    print('');
 
     // Example 7: Safe type conversions
     print('7. Safe Type Conversions\n');
