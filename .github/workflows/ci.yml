@@ -61,5 +61,8 @@ jobs:
             printf("Coverage gate passed: %.2f%% >= %.2f%%\n", actual, min);
           }'
 
+      - name: DEBUG diff before publish
+        run: git status --short && git diff
+
       - name: Validate package publishability
         run: flutter pub publish --dry-run
