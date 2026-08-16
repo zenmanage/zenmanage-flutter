@@ -2,8 +2,24 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zenmanage/zenmanage.dart';
 
+/// Minimal concrete subclass so the base [ZenmanageException.toString] can
+/// be exercised directly, since every SDK-defined subclass overrides it.
+base class _CustomZenmanageException extends ZenmanageException {
+  _CustomZenmanageException(super.message);
+}
+
 void main() {
   group('Exceptions', () {
+    group('ZenmanageException', () {
+      test('base toString includes the exception type and message', () {
+        final exception = _CustomZenmanageException('custom failure');
+        expect(
+          exception.toString(),
+          equals('ZenmanageException: custom failure'),
+        );
+      });
+    });
+
     group('ConfigurationException', () {
       test('creates exception with message', () {
         const message = 'Invalid configuration';
@@ -16,6 +32,14 @@ void main() {
       test('is a ZenmanageException', () {
         final exception = ConfigurationException('test');
         expect(exception, isA<ZenmanageException>());
+      });
+
+      test('toString includes the exception type and message', () {
+        final exception = ConfigurationException('bad config');
+        expect(
+          exception.toString(),
+          equals('ConfigurationException: bad config'),
+        );
       });
     });
 
@@ -50,6 +74,19 @@ void main() {
         final exception = ApiException('test');
         expect(exception, isA<ZenmanageException>());
       });
+
+      test('toString omits status code when not provided', () {
+        final exception = ApiException('request failed');
+        expect(exception.toString(), equals('ApiException: request failed'));
+      });
+
+      test('toString includes status code when provided', () {
+        final exception = ApiException('request failed', statusCode: 404);
+        expect(
+          exception.toString(),
+          equals('ApiException (HTTP 404): request failed'),
+        );
+      });
     });
 
     group('CacheException', () {
@@ -64,6 +101,11 @@ void main() {
         final exception = CacheException('test');
         expect(exception, isA<ZenmanageException>());
       });
+
+      test('toString includes the exception type and message', () {
+        final exception = CacheException('disk full');
+        expect(exception.toString(), equals('CacheException: disk full'));
+      });
     });
 
     group('FlagNotFoundException', () {
@@ -77,6 +119,14 @@ void main() {
       test('is a ZenmanageException', () {
         final exception = FlagNotFoundException('test');
         expect(exception, isA<ZenmanageException>());
+      });
+
+      test('toString includes the exception type and message', () {
+        final exception = FlagNotFoundException('missing-flag');
+        expect(
+          exception.toString(),
+          equals('FlagNotFoundException: Flag "missing-flag" not found'),
+        );
       });
     });
 
@@ -99,6 +149,22 @@ void main() {
         final exception = TypeConversionException('String', 'int');
         expect(exception, isA<ZenmanageException>());
       });
+
+      test('toString includes the exception type, message, and value', () {
+        final exception =
+            TypeConversionException('String', 'int', value: 'abc');
+        expect(
+          exception.toString(),
+          equals(
+            'TypeConversionException: Cannot convert String to int (value: abc)',
+          ),
+        );
+      });
+
+      test('value is null when not provided', () {
+        final exception = TypeConversionException('String', 'int');
+        expect(exception.value, isNull);
+      });
     });
 
     group('RuleEvaluationException', () {
@@ -112,6 +178,14 @@ void main() {
       test('is a ZenmanageException', () {
         final exception = RuleEvaluationException('test');
         expect(exception, isA<ZenmanageException>());
+      });
+
+      test('toString includes the exception type and message', () {
+        final exception = RuleEvaluationException('bad rule');
+        expect(
+          exception.toString(),
+          equals('RuleEvaluationException: bad rule'),
+        );
       });
     });
 
