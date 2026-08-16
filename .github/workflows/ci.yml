@@ -10,9 +10,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     env:
-      # TODO(ZEN-1235): raise back to 90 once coverage is backfilled, especially
-      # lib/src/cache/shared_preferences_cache.dart which currently has none.
-      MIN_LINE_COVERAGE: 72
+      MIN_LINE_COVERAGE: 90
 
     steps:
       - name: Checkout

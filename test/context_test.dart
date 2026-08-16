@@ -92,6 +92,16 @@ void main() {
         final context = Context.user(id: 'user_123');
         expect(context.attributes, isEmpty);
       });
+
+      test('Context.organization defaults attributes to empty when omitted', () {
+        final context = Context.organization(id: 'org_456');
+        expect(context.attributes, isEmpty);
+      });
+
+      test('Context.account defaults attributes to empty when omitted', () {
+        final context = Context.account(id: 'acc_789');
+        expect(context.attributes, isEmpty);
+      });
     });
 
     group('JSON Serialization', () {

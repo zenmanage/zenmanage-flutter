@@ -165,6 +165,14 @@ void main() {
           throwsA(isA<TypeConversionException>()),
         );
       });
+
+      test('throws for a value that is not num, string, or bool', () {
+        expect(
+          () => Flag(key: 'test', value: <int>[1, 2], type: 'json')
+              .asNumber(),
+          throwsA(isA<TypeConversionException>()),
+        );
+      });
     });
 
     group('asInt and asDouble', () {
