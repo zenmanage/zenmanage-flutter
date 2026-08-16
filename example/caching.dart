@@ -1,6 +1,7 @@
-/// Caching example
-///
-/// This example demonstrates different caching strategies and fallback patterns.
+// ignore_for_file: avoid_print -- these scripts print to demonstrate output.
+// Caching example
+//
+// This example demonstrates different caching strategies and fallback patterns.
 
 import 'package:zenmanage/zenmanage.dart';
 

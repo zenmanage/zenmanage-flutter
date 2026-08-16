@@ -1,4 +1,4 @@
-/// Test configuration setup
+// Test configuration setup
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zenmanage/zenmanage.dart';
 

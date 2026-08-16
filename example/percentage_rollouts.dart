@@ -1,6 +1,7 @@
-/// Percentage rollouts example
-///
-/// This example demonstrates gradual feature rollouts using percentage-based targeting.
+// ignore_for_file: avoid_print -- these scripts print to demonstrate output.
+// Percentage rollouts example
+//
+// This example demonstrates gradual feature rollouts using percentage-based targeting.
 
 import 'package:zenmanage/zenmanage.dart';
 
