@@ -111,8 +111,12 @@ class ApiClient {
   ///
   /// [defaultValue], when provided, is the fallback value the caller used
   /// because the flag couldn't be resolved from rules. It's sent as the
-  /// `X-Default-Value` header so it can be persisted and shown on the flag
-  /// detail page.
+  /// `X-ZEN-DEFAULT-VALUE` header so it can be persisted and shown on the
+  /// flag detail page.
+  ///
+  /// [context], when provided, is sent as the `X-ZEN-CONTEXT` header so the
+  /// server can record it — the server only reads context from that header,
+  /// not from the request body.
   ///
   /// This is a best-effort operation and failures are logged silently
   Future<void> reportUsage({
@@ -129,9 +133,17 @@ class ApiClient {
       final url = Uri.parse('$_apiEndpoint/v1/flags/$flagKey/usage');
       final headers = _buildHeaders();
 
+      if (context != null) {
+        try {
+          headers['X-ZEN-CONTEXT'] = jsonEncode(context.toJson());
+        } catch (_) {
+          // Skip the header if the context can't be encoded; still report usage.
+        }
+      }
+
       if (defaultValue != null) {
         try {
-          headers['X-Default-Value'] = jsonEncode({flagKey: defaultValue});
+          headers['X-ZEN-DEFAULT-VALUE'] = jsonEncode({flagKey: defaultValue});
         } catch (_) {
           // Skip the header if the default value can't be encoded; still report usage.
         }
@@ -143,7 +155,6 @@ class ApiClient {
         body: jsonEncode({
           'flagKey': flagKey,
           'flagValue': flagValue,
-          if (context != null) 'context': context.toJson(),
         }),
       ).timeout(
         const Duration(seconds: 5),
@@ -170,7 +181,7 @@ class ApiClient {
   Map<String, String> _buildHeaders() => {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
-        'X-API-Key': _environmentToken,
+        'X-ZEN-API-KEY': _environmentToken,
         'X-ZEN-CLIENT-AGENT': '$_clientAgent/$_sdkVersion',
       };
 }

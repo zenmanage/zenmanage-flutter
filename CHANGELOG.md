@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+- Renamed request headers to the consistent `X-ZEN-` prefix: `X-API-Key` → `X-ZEN-API-KEY`, `X-Default-Value` → `X-ZEN-DEFAULT-VALUE`
+- Context is now sent via the `X-ZEN-CONTEXT` header on usage reports instead of the request body, matching the other SDKs and how the server actually reads it
+
 ## [1.0.0] - 2026-05-08
 
 ### Added
