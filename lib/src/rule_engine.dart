@@ -2,6 +2,7 @@
 library zenmanage.rule_engine;
 
 import 'dart:convert';
+import 'dart:developer' as developer;
 
 import 'context/context.dart';
 import 'flag/flag.dart';
@@ -508,8 +509,30 @@ class RuleEngine {
     if (typed.containsKey('number')) {
       return typed['number'];
     }
+    if (typed.containsKey('value')) {
+      return typed['value'];
+    }
 
-    return typed['value'] ?? typed;
+    // Wrapper key isn't one this SDK release knows how to unwrap (for
+    // example a future flag type such as "json"). Treat it the same as a
+    // flag that couldn't be resolved rather than handing back the raw
+    // wrapper map, so evaluation falls back to the call-site default
+    // instead of returning garbage.
+    _logUnsupportedValue(typed);
+    return null;
+  }
+
+  /// Logs (once per call) that a flag's value wrapper used a key this SDK
+  /// release doesn't recognize, so evaluation is falling back to the
+  /// call-site default instead of returning the raw wrapper.
+  void _logUnsupportedValue(Map<String, dynamic> typed) {
+    developer.log(
+      'Unsupported flag value type encountered (keys: ${typed.keys.join(', ')}). '
+      'Falling back to the call-site default. Upgrade the zenmanage SDK to '
+      'add support for this type.',
+      name: 'zenmanage.rule_engine',
+      level: 900, // warning
+    );
   }
 
   String _resolveFlagType(Map<String, dynamic> flag, dynamic value) {
