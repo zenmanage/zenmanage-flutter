@@ -634,5 +634,67 @@ void main() {
 
       expect(flag!.isEnabled(), isTrue);
     });
+
+    group('unknown flag type (e.g. json)', () {
+      // Mirrors a real rules payload once the API starts serving a flag
+      // type this SDK release doesn't know about yet, alongside flags of
+      // types it already supports.
+      const rulesJson = '{"flags":['
+          '{"key":"dark-mode","type":"boolean","target":{"value":{"value":{"boolean":true}}},"rules":[]},'
+          '{"key":"theme-name","type":"string","target":{"value":{"value":{"string":"midnight"}}},"rules":[]},'
+          '{"key":"max-items","type":"number","target":{"value":{"value":{"number":42}}},"rules":[]},'
+          '{"key":"theme-config","type":"json","target":{"value":{"value":{"json":{"primaryColor":"#000","fontSize":14}}}},"rules":[]}'
+          ']}';
+
+      test('other flags in the same payload still evaluate correctly', () {
+        final boolFlag = engine.evaluateFlag(flagKey: 'dark-mode', rulesJson: rulesJson);
+        final stringFlag = engine.evaluateFlag(flagKey: 'theme-name', rulesJson: rulesJson);
+        final numberFlag = engine.evaluateFlag(flagKey: 'max-items', rulesJson: rulesJson);
+
+        expect(boolFlag!.value, isTrue);
+        expect(boolFlag.type, equals('boolean'));
+        expect(stringFlag!.value, equals('midnight'));
+        expect(stringFlag.type, equals('string'));
+        expect(numberFlag!.value, equals(42));
+        expect(numberFlag.type, equals('number'));
+      });
+
+      test(
+          'looking up the json-typed flag returns the caller-supplied default, '
+          'not the raw value wrapper', () {
+        final flag = engine.evaluateFlag(
+          flagKey: 'theme-config',
+          rulesJson: rulesJson,
+          defaultValue: 'fallback-theme',
+        );
+
+        expect(flag, isNotNull);
+        expect(flag!.value, equals('fallback-theme'));
+        expect(flag.value, isNot(isA<Map>()));
+      });
+
+      test(
+          'looking up the json-typed flag with no default behaves like a flag '
+          'that could not be resolved (returns null, does not throw)', () {
+        final flag = engine.evaluateFlag(
+          flagKey: 'theme-config',
+          rulesJson: rulesJson,
+        );
+
+        expect(flag, isNull);
+      });
+
+      test(
+          'evaluateAllFlags still returns the other flags and omits the '
+          'unresolvable json-typed flag rather than returning a raw map', () {
+        final flags = engine.evaluateAllFlags(rulesJson: rulesJson);
+
+        expect(flags.map((f) => f.key),
+            containsAll(<String>['dark-mode', 'theme-name', 'max-items']));
+
+        final jsonFlag = flags.where((f) => f.key == 'theme-config');
+        expect(jsonFlag, isEmpty);
+      });
+    });
   });
 }
