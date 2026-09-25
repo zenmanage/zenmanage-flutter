@@ -197,15 +197,31 @@ final theme = flag.asString();
 final limit = flag.asInt();
 final timeout = flag.asDouble();
 
-// JSON/Map access
+// JSON/Map access (a json flag whose decoded value is a JSON object)
 final config = flag.asJson();
 
-// List access
+// List access (a json flag whose decoded value is a JSON array)
 final items = flag.asList<String>();
 
 // Raw value
 final value = flag.getValue();
 ```
+
+### Value Types & Cross-Type Coercion
+
+A flag's `type` is one of `boolean`, `string`, `number`, or `json`. A `json` flag's decoded value is either map-shaped (a JSON object, read with `asJson()`) or list-shaped (a JSON array, read with `asList<T>()`).
+
+**`asJson()` and `asList<T>()` never throw.** Each returns the decoded value when the flag's json value has the matching shape, and a safe zero value (`{}` or `[]`) for every other case — including a json flag whose value has the *other* shape (e.g. calling `asJson()` on a list-shaped json flag), or a flag that isn't json-typed at all:
+
+| Called on →<br>Flag type ↓ | `asBool` | `asString` | `asNumber` | `asJson` (map) | `asList` (list) |
+|---|---|---|---|---|---|
+| `boolean` | the bool | value-derived* | value-derived* | `{}` | `[]` |
+| `string` | value-derived* | the string | value-derived* | `{}` | `[]` |
+| `number` | value-derived* | value-derived* | the number | `{}` | `[]` |
+| `json` (map-shaped) | `true` | `""` | `0` | the decoded map | `[]` |
+| `json` (list-shaped) | `true` | `""` | `0` | `{}` | the decoded list |
+
+\* `asBool()`, `asString()`, and `asNumber()` on a `boolean`/`string`/`number` flag convert the underlying value directly (e.g. `asBool()` on the string `"true"` returns `true`, `asNumber()` on `"42"` returns `42`) — see the accessor doc comments in `lib/src/flag/flag.dart` for the exact rules. Calling `asBool()`, `asString()`, or `asNumber()` on a `json`-typed flag never attempts a lossy conversion of the decoded map/list: it always falls back to the same safe zero value the table shows (`true`/`""`/`0`), the same way `asJson()`/`asList()` do for non-json flags.
 
 ## Caching Strategies
 

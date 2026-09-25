@@ -509,15 +509,18 @@ class RuleEngine {
     if (typed.containsKey('number')) {
       return typed['number'];
     }
+    if (typed.containsKey('json')) {
+      return typed['json'];
+    }
     if (typed.containsKey('value')) {
       return typed['value'];
     }
 
     // Wrapper key isn't one this SDK release knows how to unwrap (for
-    // example a future flag type such as "json"). Treat it the same as a
-    // flag that couldn't be resolved rather than handing back the raw
-    // wrapper map, so evaluation falls back to the call-site default
-    // instead of returning garbage.
+    // example a still-newer flag type this release predates). Treat it
+    // the same as a flag that couldn't be resolved rather than handing
+    // back the raw wrapper map, so evaluation falls back to the call-site
+    // default instead of returning garbage.
     _logUnsupportedValue(typed);
     return null;
   }
