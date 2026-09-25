@@ -90,6 +90,22 @@ void main() {
           isTrue,
         );
       });
+
+      test('converts an empty list to true (json flags are always true, '
+          'never a lossy truthiness check on the decoded value)', () {
+        expect(
+          Flag(key: 'test', value: <int>[], type: 'json').asBool(),
+          isTrue,
+        );
+      });
+
+      test('converts an empty map to true', () {
+        expect(
+          Flag(key: 'test', value: <String, dynamic>{}, type: 'json')
+              .asBool(),
+          isTrue,
+        );
+      });
     });
 
     group('asString', () {
@@ -117,6 +133,22 @@ void main() {
       test('converts null to empty string', () {
         expect(
           Flag(key: 'test', value: null, type: 'null').asString(),
+          equals(''),
+        );
+      });
+
+      test('returns empty string for a json map value (never a raw '
+          'toString() dump of the map)', () {
+        expect(
+          Flag(key: 'test', value: {'key': 'value'}, type: 'json')
+              .asString(),
+          equals(''),
+        );
+      });
+
+      test('returns empty string for a json list value', () {
+        expect(
+          Flag(key: 'test', value: [1, 2, 3], type: 'json').asString(),
           equals(''),
         );
       });
@@ -166,11 +198,19 @@ void main() {
         );
       });
 
-      test('throws for a value that is not num, string, or bool', () {
+      test('returns 0 for a json list value (safe zero value, not a throw)',
+          () {
         expect(
-          () => Flag(key: 'test', value: <int>[1, 2], type: 'json')
+          Flag(key: 'test', value: <int>[1, 2], type: 'json').asNumber(),
+          equals(0),
+        );
+      });
+
+      test('returns 0 for a json map value', () {
+        expect(
+          Flag(key: 'test', value: {'key': 'value'}, type: 'json')
               .asNumber(),
-          throwsA(isA<TypeConversionException>()),
+          equals(0),
         );
       });
     });
@@ -204,11 +244,26 @@ void main() {
         expect(flag.asJson(), isA<Map<String, dynamic>>());
       });
 
-      test('throws for non-map value', () {
+      test('returns {} for a non-map value (safe zero value, not a throw)',
+          () {
         expect(
-          () => Flag(key: 'test', value: 'not a map', type: 'string')
-              .asJson(),
-          throwsA(isA<TypeConversionException>()),
+          Flag(key: 'test', value: 'not a map', type: 'string').asJson(),
+          equals(<String, dynamic>{}),
+        );
+      });
+
+      test('returns {} for a list-shaped json value (use asList for that '
+          'shape instead)', () {
+        expect(
+          Flag(key: 'test', value: [1, 2, 3], type: 'json').asJson(),
+          equals(<String, dynamic>{}),
+        );
+      });
+
+      test('returns {} for a non-json flag entirely', () {
+        expect(
+          Flag(key: 'test', value: true, type: 'boolean').asJson(),
+          equals(<String, dynamic>{}),
         );
       });
     });
@@ -220,11 +275,21 @@ void main() {
         expect(flag.asList<int>(), equals(list));
       });
 
-      test('throws for non-list value', () {
+      test('returns [] for a non-list value (safe zero value, not a throw)',
+          () {
         expect(
-          () => Flag(key: 'test', value: 'not a list', type: 'string')
+          Flag(key: 'test', value: 'not a list', type: 'string')
               .asList<String>(),
-          throwsA(isA<TypeConversionException>()),
+          equals(<String>[]),
+        );
+      });
+
+      test('returns [] for a map-shaped json value (use asJson for that '
+          'shape instead)', () {
+        expect(
+          Flag(key: 'test', value: {'key': 'value'}, type: 'json')
+              .asList<String>(),
+          equals(<String>[]),
         );
       });
     });

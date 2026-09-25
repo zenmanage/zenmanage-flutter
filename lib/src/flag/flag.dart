@@ -51,6 +51,12 @@ class Flag {
       if (value is double) {
         return (value as double) != 0.0;
       }
+      if (value is Map || value is List) {
+        // A json-typed flag's value is never a lossy conversion target for
+        // asBool(): it's simply "not the boolean type", so it's always
+        // true, regardless of whether the decoded json is empty.
+        return true;
+      }
       return _isTruthy(value);
     } catch (e) {
       throw TypeConversionException('${value.runtimeType}', 'bool',
@@ -73,6 +79,13 @@ class Flag {
         return value.toString();
       }
       if (value == null) {
+        return '';
+      }
+      if (value is Map || value is List) {
+        // A json-typed flag's value has no lossy string form to fall back
+        // to (unlike toString() on a Dart Map/List, which would leak
+        // internal representation), so asString() returns the same safe
+        // zero value it uses for any other non-string type.
         return '';
       }
       return value.toString();
@@ -102,6 +115,12 @@ class Flag {
       if (value is bool) {
         return (value as bool) ? 1 : 0;
       }
+      if (value is Map || value is List) {
+        // A json-typed flag's value never converts to a number; fall back
+        // to the same safe zero value as any other non-number type instead
+        // of throwing.
+        return 0;
+      }
       throw TypeConversionException('${value.runtimeType}', 'num',
           value: value);
     } catch (e) {
@@ -123,7 +142,11 @@ class Flag {
 
   /// Converts the flag value to a JSON object/map
   ///
-  /// Throws [TypeConversionException] if the value is not a map
+  /// Returns an empty map `{}` for a non-json flag, or for a json flag
+  /// whose decoded value is list-shaped rather than map-shaped — the same
+  /// safe zero-value fallback the other typed accessors use, never a
+  /// lossy conversion or a thrown exception. Use [asList] for list-shaped
+  /// json values.
   Map<String, dynamic> asJson() {
     if (value is Map<String, dynamic>) {
       return value as Map<String, dynamic>;
@@ -131,13 +154,16 @@ class Flag {
     if (value is Map) {
       return Map<String, dynamic>.from(value as Map);
     }
-    throw TypeConversionException('${value.runtimeType}', 'Map',
-        value: value);
+    return <String, dynamic>{};
   }
 
   /// Converts the flag value to a list
   ///
-  /// Throws [TypeConversionException] if the value is not a list
+  /// Returns an empty list `[]` for a non-json flag, or for a json flag
+  /// whose decoded value is map-shaped rather than list-shaped — the same
+  /// safe zero-value fallback the other typed accessors use, never a
+  /// lossy conversion or a thrown exception. Use [asJson] for map-shaped
+  /// json values.
   List<T> asList<T>() {
     if (value is List<T>) {
       return value as List<T>;
@@ -145,8 +171,7 @@ class Flag {
     if (value is List) {
       return List<T>.from(value as List);
     }
-    throw TypeConversionException('${value.runtimeType}', 'List<$T>',
-        value: value);
+    return <T>[];
   }
 
   /// Helper to check if a value is truthy

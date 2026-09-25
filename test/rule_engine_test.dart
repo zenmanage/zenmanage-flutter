@@ -635,15 +635,15 @@ void main() {
       expect(flag!.isEnabled(), isTrue);
     });
 
-    group('unknown flag type (e.g. json)', () {
-      // Mirrors a real rules payload once the API starts serving a flag
-      // type this SDK release doesn't know about yet, alongside flags of
-      // types it already supports.
+    group('json flag type support', () {
+      // Mirrors a real rules payload with a json-typed flag alongside flags
+      // of the other supported types.
       const rulesJson = '{"flags":['
           '{"key":"dark-mode","type":"boolean","target":{"value":{"value":{"boolean":true}}},"rules":[]},'
           '{"key":"theme-name","type":"string","target":{"value":{"value":{"string":"midnight"}}},"rules":[]},'
           '{"key":"max-items","type":"number","target":{"value":{"value":{"number":42}}},"rules":[]},'
-          '{"key":"theme-config","type":"json","target":{"value":{"value":{"json":{"primaryColor":"#000","fontSize":14}}}},"rules":[]}'
+          '{"key":"theme-config","type":"json","target":{"value":{"value":{"json":{"primaryColor":"#000","fontSize":14}}}},"rules":[]},'
+          '{"key":"allowed-ids","type":"json","target":{"value":{"value":{"json":[1,2,3]}}},"rules":[]}'
           ']}';
 
       test('other flags in the same payload still evaluate correctly', () {
@@ -659,9 +659,33 @@ void main() {
         expect(numberFlag.type, equals('number'));
       });
 
-      test(
-          'looking up the json-typed flag returns the caller-supplied default, '
-          'not the raw value wrapper', () {
+      test('a json-typed flag with a map value round-trips correctly '
+          '(the {"json": ...} wrapper is unwrapped, not returned raw)', () {
+        final flag = engine.evaluateFlag(
+          flagKey: 'theme-config',
+          rulesJson: rulesJson,
+        );
+
+        expect(flag, isNotNull);
+        expect(flag!.type, equals('json'));
+        expect(flag.value, equals({'primaryColor': '#000', 'fontSize': 14}));
+        expect(flag.asJson(), equals({'primaryColor': '#000', 'fontSize': 14}));
+      });
+
+      test('a json-typed flag with a list value round-trips correctly', () {
+        final flag = engine.evaluateFlag(
+          flagKey: 'allowed-ids',
+          rulesJson: rulesJson,
+        );
+
+        expect(flag, isNotNull);
+        expect(flag!.type, equals('json'));
+        expect(flag.value, equals([1, 2, 3]));
+        expect(flag.asList<int>(), equals([1, 2, 3]));
+      });
+
+      test('a caller-supplied default is ignored once the json flag '
+          'resolves from rules', () {
         final flag = engine.evaluateFlag(
           flagKey: 'theme-config',
           rulesJson: rulesJson,
@@ -669,31 +693,83 @@ void main() {
         );
 
         expect(flag, isNotNull);
-        expect(flag!.value, equals('fallback-theme'));
+        expect(flag!.value, equals({'primaryColor': '#000', 'fontSize': 14}));
+      });
+
+      test('evaluateAllFlags includes the json-typed flags with their '
+          'decoded values, not the raw wrapper map', () {
+        final flags = engine.evaluateAllFlags(rulesJson: rulesJson);
+
+        expect(
+          flags.map((f) => f.key),
+          containsAll(<String>[
+            'dark-mode',
+            'theme-name',
+            'max-items',
+            'theme-config',
+            'allowed-ids',
+          ]),
+        );
+
+        final mapFlag = flags.singleWhere((f) => f.key == 'theme-config');
+        expect(mapFlag.type, equals('json'));
+        expect(mapFlag.value, equals({'primaryColor': '#000', 'fontSize': 14}));
+
+        final listFlag = flags.singleWhere((f) => f.key == 'allowed-ids');
+        expect(listFlag.type, equals('json'));
+        expect(listFlag.value, equals([1, 2, 3]));
+      });
+    });
+
+    group('unknown flag type (still-newer than json)', () {
+      // A flag type this SDK release genuinely doesn't know about (i.e.
+      // newer than json) should still degrade to the call-site default
+      // rather than leaking the raw wrapper map, per ZEN-1667.
+      const rulesJson = '{"flags":['
+          '{"key":"dark-mode","type":"boolean","target":{"value":{"value":{"boolean":true}}},"rules":[]},'
+          '{"key":"exotic-flag","type":"vector","target":{"value":{"value":{"vector":[0.1,0.2]}}},"rules":[]}'
+          ']}';
+
+      test('other flags in the same payload still evaluate correctly', () {
+        final boolFlag = engine.evaluateFlag(flagKey: 'dark-mode', rulesJson: rulesJson);
+
+        expect(boolFlag!.value, isTrue);
+        expect(boolFlag.type, equals('boolean'));
+      });
+
+      test('looking up the unknown-typed flag returns the caller-supplied '
+          'default, not the raw value wrapper', () {
+        final flag = engine.evaluateFlag(
+          flagKey: 'exotic-flag',
+          rulesJson: rulesJson,
+          defaultValue: 'fallback-value',
+        );
+
+        expect(flag, isNotNull);
+        expect(flag!.value, equals('fallback-value'));
         expect(flag.value, isNot(isA<Map>()));
       });
 
-      test(
-          'looking up the json-typed flag with no default behaves like a flag '
-          'that could not be resolved (returns null, does not throw)', () {
+      test('looking up the unknown-typed flag with no default behaves like '
+          'a flag that could not be resolved (returns null, does not '
+          'throw)', () {
         final flag = engine.evaluateFlag(
-          flagKey: 'theme-config',
+          flagKey: 'exotic-flag',
           rulesJson: rulesJson,
         );
 
         expect(flag, isNull);
       });
 
-      test(
-          'evaluateAllFlags still returns the other flags and omits the '
-          'unresolvable json-typed flag rather than returning a raw map', () {
+      test('evaluateAllFlags still returns the other flags and omits the '
+          'unresolvable unknown-typed flag rather than returning a raw '
+          'map', () {
         final flags = engine.evaluateAllFlags(rulesJson: rulesJson);
 
-        expect(flags.map((f) => f.key),
-            containsAll(<String>['dark-mode', 'theme-name', 'max-items']));
+        expect(flags.map((f) => f.key), containsAll(<String>['dark-mode']));
 
-        final jsonFlag = flags.where((f) => f.key == 'theme-config');
-        expect(jsonFlag, isEmpty);
+        final exoticFlag = flags.where((f) => f.key == 'exotic-flag');
+        expect(exoticFlag, isEmpty);
       });
     });
   });

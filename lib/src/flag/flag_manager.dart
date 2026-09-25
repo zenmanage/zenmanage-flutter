@@ -134,6 +134,8 @@ class FlagManager {
       type = 'boolean';
     } else if (defaultValue is num) {
       type = 'number';
+    } else if (defaultValue is Map || defaultValue is List) {
+      type = 'json';
     } else {
       type = 'string';
     }

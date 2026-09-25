@@ -282,6 +282,40 @@ void main() {
       expect(usageHeaders.first.value('X-ZEN-DEFAULT-VALUE'), equals('{"missing-flag":"control"}'));
     });
 
+    test('infers json type for a map default value', () async {
+      final manager = buildManager();
+      final defaultValue = {'primaryColor': '#000', 'fontSize': 14};
+
+      final flag = await manager.single('missing-flag', defaultValue: defaultValue);
+
+      expect(flag.value, equals(defaultValue));
+      expect(flag.type, equals('json'));
+      expect(flag.asJson(), equals(defaultValue));
+
+      await waitForUsageReport();
+      expect(
+        usageHeaders.first.value('X-ZEN-DEFAULT-VALUE'),
+        equals(jsonEncode({'missing-flag': defaultValue})),
+      );
+    });
+
+    test('infers json type for a list default value', () async {
+      final manager = buildManager();
+      final defaultValue = [1, 2, 3];
+
+      final flag = await manager.single('missing-flag', defaultValue: defaultValue);
+
+      expect(flag.value, equals(defaultValue));
+      expect(flag.type, equals('json'));
+      expect(flag.asList<int>(), equals(defaultValue));
+
+      await waitForUsageReport();
+      expect(
+        usageHeaders.first.value('X-ZEN-DEFAULT-VALUE'),
+        equals(jsonEncode({'missing-flag': defaultValue})),
+      );
+    });
+
     test('reports the default value even when the flag is found', () async {
       rulesPayload = {
         'flags': {

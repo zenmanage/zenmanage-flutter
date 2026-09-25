@@ -7,12 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Full support for the `json` flag type: `RuleEngine` now unwraps the `{"json": ...}` value wrapper (previously only `boolean`/`string`/`number` were recognized, so json-typed flags always fell back to the call-site default), and default values passed to `single()` that are a `Map` or `List` are now typed as `json` instead of `string`
+
 ### Changed
 - Renamed request headers to the consistent `X-ZEN-` prefix: `X-API-Key` → `X-ZEN-API-KEY`, `X-Default-Value` → `X-ZEN-DEFAULT-VALUE`
 - Context is now sent via the `X-ZEN-CONTEXT` header on usage reports instead of the request body, matching the other SDKs and how the server actually reads it
 
 ### Fixed
-- `RuleEngine` no longer returns the raw value wrapper (e.g. `{"json": ...}`) for a flag type this SDK release doesn't recognize yet; it now falls back to the call-site default instead, matching how a missing flag already behaves
+- `Flag.asJson()` no longer throws for a list-shaped json value or a non-json flag; it now returns `{}`, matching the safe-zero-value behavior documented for the other typed accessors
+- `Flag.asList<T>()` no longer throws for a map-shaped json value or a non-json flag; it now returns `[]`
+- `Flag.asBool()`, `Flag.asString()`, and `Flag.asNumber()` no longer produce inconsistent results (or, for `asNumber()`, throw) when called on a `json`-typed flag's decoded map/list; they now fall back to the same safe zero value (`true`/`""`/`0`) documented in the README's coercion table
+- `RuleEngine` no longer returns the raw value wrapper (e.g. `{"vector": ...}`) for a flag type this SDK release doesn't recognize yet; it now falls back to the call-site default instead, matching how a missing flag already behaves
 - `FlagManager.single()` now reports the default value on every usage report, not just when the flag falls back to it
 - `RuleEngine` no longer drops flags shaped as `{"value": ..., "type": ...}` in a map-keyed `flags` payload
 - `RuleEngine` now recognizes the `equals` comparer alias and underscore-spelled comparers like `starts_with`
