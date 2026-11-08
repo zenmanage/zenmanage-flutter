@@ -7,14 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Changed
-
-- Pinned GitHub Actions to commit SHAs and enabled Dependabot updates for them. No SDK behavior changes.
-
 ### Added
 - Full support for the `json` flag type: `RuleEngine` now unwraps the `{"json": ...}` value wrapper (previously only `boolean`/`string`/`number` were recognized, so json-typed flags always fell back to the call-site default), and default values passed to `single()` that are a `Map` or `List` are now typed as `json` instead of `string`
 
 ### Changed
+- Pinned GitHub Actions to commit SHAs and enabled Dependabot updates for them. No SDK behavior changes.
 - Renamed request headers to the consistent `X-ZEN-` prefix: `X-API-Key` → `X-ZEN-API-KEY`, `X-Default-Value` → `X-ZEN-DEFAULT-VALUE`
 - Context is now sent via the `X-ZEN-CONTEXT` header on usage reports instead of the request body, matching the other SDKs and how the server actually reads it
 
