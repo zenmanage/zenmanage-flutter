@@ -24,6 +24,9 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: TEMP show what pub get changed
+        run: git diff
+
       - name: Analyze
         run: flutter analyze
 
