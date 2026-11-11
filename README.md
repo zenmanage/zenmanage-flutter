@@ -74,6 +74,8 @@ if (flag.isEnabled()) {
 
 That's it! 🎉
 
+For a longer walkthrough, including widgets, context targeting, and caching, see the [Flutter quickstart](https://zenmanage.com/developers/quickstarts/flutter/).
+
 ## Flutter Bindings
 
 Use [ZenmanageInitializer] for app-wide async initialization and
@@ -595,7 +597,7 @@ MIT - See [LICENSE](LICENSE) file for details
 
 ## Support
 
-- 📚 [Documentation](https://github.com/zenmanage/zenmanage-flutter)
+- 📚 [Documentation](https://zenmanage.com/developers/quickstarts/flutter/)
 - 🐛 [Issue Tracker](https://github.com/zenmanage/zenmanage-flutter/issues)
 - 💬 [Discussions](https://github.com/zenmanage/zenmanage-flutter/discussions)
 - 🌐 [Zenmanage Website](https://zenmanage.com)
