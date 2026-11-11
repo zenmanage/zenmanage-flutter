@@ -4,3 +4,24 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+
+  # The SDK (root pubspec.yaml) and the example app (example/pubspec.yaml).
+  #
+  # `widen` is deliberate for a package published to pub.dev: when a new major
+  # version of a dependency appears, Dependabot widens the allowed range
+  # (^1.1.0 becomes >=1.1.0 <3.0.0) instead of raising the minimum. Raising the
+  # minimum on every release would force everyone who installs the SDK onto
+  # newer versions of http and shared_preferences than they may be able to use.
+  # Minor and patch releases need no PR: pubspec.lock is not committed, so CI
+  # already resolves the newest versions the ranges allow on every run.
+  #
+  # example/android (Gradle) is intentionally not listed: Flutter generates and
+  # upgrades those versions together with the Flutter tool, and CI doesn't build
+  # Android, so Gradle bumps there couldn't be validated.
+  - package-ecosystem: "pub"
+    directories:
+      - "/"
+      - "/example"
+    schedule:
+      interval: "weekly"
+    versioning-strategy: widen
