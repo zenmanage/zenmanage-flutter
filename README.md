@@ -2,6 +2,7 @@
 
 [![pub package](https://img.shields.io/pub/v/zenmanage.svg)](https://pub.dev/packages/zenmanage)
 [![CI](https://github.com/zenmanage/zenmanage-flutter/actions/workflows/ci.yml/badge.svg)](https://github.com/zenmanage/zenmanage-flutter/actions/workflows/ci.yml)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/9449c02139ea4490ab36a44ecff7d1ef)](https://app.codacy.com/gh/zenmanage/zenmanage-flutter/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 [![Coverage Gate](https://img.shields.io/badge/coverage%20gate-90%25-brightgreen)](https://github.com/zenmanage/zenmanage-flutter/actions/workflows/ci.yml)
 [![Dart SDK Version](https://img.shields.io/badge/Dart-3.0+-blue.svg)](https://dart.dev)
 [![Flutter SDK Version](https://img.shields.io/badge/Flutter-3.0+-blue.svg)](https://flutter.dev)
