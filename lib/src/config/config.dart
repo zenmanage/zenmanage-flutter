@@ -2,6 +2,11 @@
 library zenmanage.config;
 
 import '../cache/cache.dart';
+import '../logging/logger.dart';
+import '../version.dart';
+
+/// Default for [Config.requestTimeout], shared with the other Zenmanage SDKs.
+const Duration defaultRequestTimeout = Duration(seconds: 10);
 
 /// Configuration for the Zenmanage SDK
 class Config {
@@ -12,11 +17,13 @@ class Config {
     this.apiEndpoint = 'https://api.zenmanage.com',
     this.cacheTtl = 3600,
     this.enableUsageReporting = true,
-    this.sdkVersion = '1.0.0',
+    this.sdkVersion = zenmanageSdkVersion,
     this.clientAgent,
+    this.requestTimeout = defaultRequestTimeout,
+    this.logger = const NullLogger(),
   });
 
-  /// The environment token (mob_, srv_, or cli_ prefix)
+  /// The environment token: a mobile key (mob_) or client key (cli_)
   final String environmentToken;
 
   /// The cache implementation to use
@@ -36,4 +43,12 @@ class Config {
 
   /// Optional override for the X-ZEN-CLIENT-AGENT header value
   final String? clientAgent;
+
+  /// How long a rules request may wait before it fails (and is retried).
+  ///
+  /// Usage reports use the smaller of this and 5 seconds.
+  final Duration requestTimeout;
+
+  /// Receives SDK diagnostics. Defaults to a logger that discards everything.
+  final ZenmanageLogger logger;
 }

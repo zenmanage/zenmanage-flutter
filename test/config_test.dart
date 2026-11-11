@@ -86,12 +86,12 @@ void main() {
       expect(config.sdkVersion, equals('2.0.0'));
     });
 
-    test('ConfigBuilder defaults SDK version to 1.0.0', () {
+    test('ConfigBuilder defaults SDK version to the runtime version', () {
       final config = ConfigBuilder.create()
           .withEnvironmentToken('mob_test_token')
           .build();
 
-      expect(config.sdkVersion, equals('1.0.0'));
+      expect(config.sdkVersion, equals(zenmanageSdkVersion));
     });
 
     test('ConfigBuilder with custom client agent', () {
@@ -111,12 +111,75 @@ void main() {
       expect(config.clientAgent, isNull);
     });
 
-    test('ConfigBuilder accepts srv_ prefixed tokens', () {
+    test('ConfigBuilder defaults the request timeout to 10 seconds', () {
       final config = ConfigBuilder.create()
-          .withEnvironmentToken('srv_test_token')
+          .withEnvironmentToken('mob_test_token')
           .build();
 
-      expect(config.environmentToken, equals('srv_test_token'));
+      expect(config.requestTimeout, equals(const Duration(seconds: 10)));
+    });
+
+    test('ConfigBuilder with custom request timeout', () {
+      final config = ConfigBuilder.create()
+          .withEnvironmentToken('mob_test_token')
+          .withRequestTimeout(const Duration(seconds: 3))
+          .build();
+
+      expect(config.requestTimeout, equals(const Duration(seconds: 3)));
+    });
+
+    test('ConfigBuilder rejects a zero or negative request timeout', () {
+      final builder = ConfigBuilder.create().withEnvironmentToken('mob_test_token');
+
+      expect(() => builder.withRequestTimeout(Duration.zero), throwsArgumentError);
+      expect(
+        () => builder.withRequestTimeout(const Duration(seconds: -1)),
+        throwsArgumentError,
+      );
+    });
+
+    test('ConfigBuilder defaults the logger to a no-op logger', () {
+      final config = ConfigBuilder.create()
+          .withEnvironmentToken('mob_test_token')
+          .build();
+
+      expect(config.logger, isA<NullLogger>());
+    });
+
+    test('ConfigBuilder with custom logger', () {
+      const logger = NullLogger();
+      final config = ConfigBuilder.create()
+          .withEnvironmentToken('mob_test_token')
+          .withLogger(logger)
+          .build();
+
+      expect(config.logger, same(logger));
+    });
+
+    test('ConfigBuilder rejects srv_ (server) tokens', () {
+      expect(
+        () => ConfigBuilder.create().withEnvironmentToken('srv_test_token').build(),
+        throwsA(
+          isA<ConfigurationException>().having(
+            (e) => e.message,
+            'message',
+            allOf(contains('Server keys'), contains('extracted'), contains('mob_'), contains('cli_')),
+          ),
+        ),
+      );
+    });
+
+    test('ConfigBuilder rejects a token with an unknown prefix', () {
+      expect(
+        () => ConfigBuilder.create().withEnvironmentToken('abc_test_token').build(),
+        throwsA(
+          isA<ConfigurationException>().having(
+            (e) => e.message,
+            'message',
+            contains('mobile key (mob_) or a client key (cli_)'),
+          ),
+        ),
+      );
     });
 
     test('ConfigBuilder accepts cli_ prefixed tokens', () {

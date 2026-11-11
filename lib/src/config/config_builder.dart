@@ -2,9 +2,12 @@
 library zenmanage.config_builder;
 
 import 'config.dart';
+import 'environment_token.dart';
 import '../cache/cache.dart';
 import '../cache/in_memory_cache.dart';
 import '../exceptions/exceptions.dart';
+import '../logging/logger.dart';
+import '../version.dart';
 
 /// Builder for creating Zenmanage configuration
 ///
@@ -21,8 +24,10 @@ class ConfigBuilder {
   String _apiEndpoint = 'https://api.zenmanage.com';
   int _cacheTtl = 3600;
   bool _enableUsageReporting = true;
-  String _sdkVersion = '1.0.0';
+  String _sdkVersion = zenmanageSdkVersion;
   String? _clientAgent;
+  Duration _requestTimeout = defaultRequestTimeout;
+  ZenmanageLogger _logger = const NullLogger();
 
   /// Creates a new config builder
   static ConfigBuilder create() => ConfigBuilder();
@@ -69,6 +74,28 @@ class ConfigBuilder {
     return this;
   }
 
+  /// Sets how long a rules request may wait before it fails (default 10
+  /// seconds, the same as the other Zenmanage SDKs).
+  ///
+  /// Usage reports are capped at 5 seconds regardless.
+  ///
+  /// Throws [ArgumentError] if [timeout] is zero or negative.
+  ConfigBuilder withRequestTimeout(Duration timeout) {
+    if (timeout <= Duration.zero) {
+      throw ArgumentError.value(timeout, 'timeout', 'must be greater than zero');
+    }
+    _requestTimeout = timeout;
+    return this;
+  }
+
+  /// Routes SDK diagnostics (fetch attempts, retries, failures) to [logger].
+  ///
+  /// Nothing is logged by default.
+  ConfigBuilder withLogger(ZenmanageLogger logger) {
+    _logger = logger;
+    return this;
+  }
+
   /// Builds the configuration
   ///
   /// Throws [ConfigurationException] if required fields are missing
@@ -80,14 +107,7 @@ class ConfigBuilder {
       );
     }
 
-    if (!token.startsWith('mob_') &&
-        !token.startsWith('srv_') &&
-        !token.startsWith('cli_')) {
-      throw ConfigurationException(
-        'Invalid environment token. Expected a token starting with mob_, srv_, or cli_. '
-        'Get your token from https://zenmanage.com',
-      );
-    }
+    validateEnvironmentToken(token);
 
     final cache = _cache ?? InMemoryCache();
 
@@ -99,6 +119,8 @@ class ConfigBuilder {
       enableUsageReporting: _enableUsageReporting,
       sdkVersion: _sdkVersion,
       clientAgent: _clientAgent,
+      requestTimeout: _requestTimeout,
+      logger: _logger,
     );
   }
 }

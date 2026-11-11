@@ -10,7 +10,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Full support for the `json` flag type: `RuleEngine` now unwraps the `{"json": ...}` value wrapper (previously only `boolean`/`string`/`number` were recognized, so json-typed flags always fell back to the call-site default), and default values passed to `single()` that are a `Map` or `List` are now typed as `json` instead of `string`
 
+- Failed rules fetches are now retried: up to 3 attempts with 100ms then 200ms of backoff, the same as the other Zenmanage SDKs. A rejected token (HTTP 401/403) is not retried
+- `ConfigBuilder.withRequestTimeout(Duration)` sets how long a rules request may wait. It defaults to 10 seconds (it was a hardcoded 30); usage reports are capped at 5 seconds
+- `ConfigBuilder.withLogger(ZenmanageLogger)` routes SDK diagnostics (fetch attempts, retries, failures) to your own logging. Nothing is logged by default
+- `zenmanageSdkVersion`, the version reported to the API in the `X-ZEN-CLIENT-AGENT` header. It is the single source for the version, and a test fails if it drifts from `pubspec.yaml` or this changelog
+
 ### Changed
+- Environment tokens must be a mobile key (`mob_...`) or a client key (`cli_...`). Server keys (`srv_...`) are now rejected when the configuration is created, with a message explaining why: a server key bundled into an app can be extracted by anyone. The API already refused them for this SDK, and it now also accepts client keys for it, so Flutter web has a key it can use
 - Pinned GitHub Actions to commit SHAs and enabled Dependabot updates for them. No SDK behavior changes.
 - Renamed request headers to the consistent `X-ZEN-` prefix: `X-API-Key` → `X-ZEN-API-KEY`, `X-Default-Value` → `X-ZEN-DEFAULT-VALUE`
 - Context is now sent via the `X-ZEN-CONTEXT` header on usage reports instead of the request body, matching the other SDKs and how the server actually reads it

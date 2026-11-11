@@ -54,6 +54,21 @@ class _FakeZenmanage extends Zenmanage {
 const _rulesWithDashboard =
     '{"flags":{"new-dashboard":{"value":true,"type":"boolean"}}}';
 
+
+/// Lets real network I/O (a refused connection to the dead endpoint these
+/// tests use) and the SDK's fake-time retry backoff run until [done] holds.
+///
+/// A rules fetch retries with a short backoff, so a test that only pumps once
+/// would end with the SDK's retry timer still pending.
+Future<void> _settle(WidgetTester tester, bool Function() done) async {
+  for (var i = 0; i < 40 && !done(); i++) {
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 25)),
+    );
+    await tester.pump(const Duration(milliseconds: 300));
+  }
+}
+
 void main() {
   group('Flutter bindings', () {
     testWidgets('ZenmanageProvider exposes SDK instance', (tester) async {
@@ -103,6 +118,11 @@ void main() {
       );
 
       expect(find.text('loading'), findsOneWidget);
+
+      // The endpoint is unreachable, so once the retries are exhausted the
+      // initializer must show the error state rather than stay on loading.
+      await _settle(tester, () => find.text('error').evaluate().isNotEmpty);
+      expect(find.text('error'), findsOneWidget);
     });
 
     testWidgets('ZenmanageFlagBuilder renders default value path',
@@ -133,6 +153,10 @@ void main() {
       );
 
       expect(find.text('loading'), findsOneWidget);
+
+      // With the endpoint unreachable the call-site default is what renders.
+      await _settle(tester, () => find.text('false').evaluate().isNotEmpty);
+      expect(find.text('false'), findsOneWidget);
     });
 
     testWidgets('ZenmanageInitializer renders child once initialization succeeds',
