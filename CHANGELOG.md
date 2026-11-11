@@ -7,82 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
-- Full support for the `json` flag type: `RuleEngine` now unwraps the `{"json": ...}` value wrapper (previously only `boolean`/`string`/`number` were recognized, so json-typed flags always fell back to the call-site default), and default values passed to `single()` that are a `Map` or `List` are now typed as `json` instead of `string`
+## 1.0.0
 
-- Failed rules fetches are now retried: up to 3 attempts with 100ms then 200ms of backoff, the same as the other Zenmanage SDKs. A rejected token (HTTP 401/403) is not retried
-- `ConfigBuilder.withRequestTimeout(Duration)` sets how long a rules request may wait. It defaults to 10 seconds (it was a hardcoded 30); usage reports are capped at 5 seconds
-- `ConfigBuilder.withLogger(ZenmanageLogger)` routes SDK diagnostics (fetch attempts, retries, failures) to your own logging. Nothing is logged by default
-- `zenmanageSdkVersion`, the version reported to the API in the `X-ZEN-CLIENT-AGENT` header. It is the single source for the version, and a test fails if it drifts from `pubspec.yaml` or this changelog
-
-### Changed
-- Environment tokens must be a mobile key (`mob_...`) or a client key (`cli_...`). Server keys (`srv_...`) are now rejected when the configuration is created, with a message explaining why: a server key bundled into an app can be extracted by anyone. The API already refused them for this SDK, and it now also accepts client keys for it, so Flutter web has a key it can use
-- Pinned GitHub Actions to commit SHAs and enabled Dependabot updates for them. No SDK behavior changes.
-- Renamed request headers to the consistent `X-ZEN-` prefix: `X-API-Key` → `X-ZEN-API-KEY`, `X-Default-Value` → `X-ZEN-DEFAULT-VALUE`
-- Context is now sent via the `X-ZEN-CONTEXT` header on usage reports instead of the request body, matching the other SDKs and how the server actually reads it
-
-### Fixed
-- `Flag.asJson()` no longer throws for a list-shaped json value or a non-json flag; it now returns `{}`, matching the safe-zero-value behavior documented for the other typed accessors
-- `Flag.asList<T>()` no longer throws for a map-shaped json value or a non-json flag; it now returns `[]`
-- `Flag.asBool()`, `Flag.asString()`, and `Flag.asNumber()` no longer produce inconsistent results (or, for `asNumber()`, throw) when called on a `json`-typed flag's decoded map/list; they now fall back to the same safe zero value (`true`/`""`/`0`) documented in the README's coercion table
-- `RuleEngine` no longer returns the raw value wrapper (e.g. `{"vector": ...}`) for a flag type this SDK release doesn't recognize yet; it now falls back to the call-site default instead, matching how a missing flag already behaves
-- `FlagManager.single()` now reports the default value on every usage report, not just when the flag falls back to it
-- `RuleEngine` no longer drops flags shaped as `{"value": ..., "type": ...}` in a map-keyed `flags` payload
-- `RuleEngine` now recognizes the `equals` comparer alias and underscore-spelled comparers like `starts_with`
-- `RuleEngine`'s `notnull` comparer now correctly fails (instead of matching) when the target attribute is absent
-- Fixed CI, which had never successfully run past its Flutter setup step: an invalid `flutter-version: stable` action input, real `print()` compile errors in the `example/` scripts, and a test bug in `cache_test.dart` that corrupted a subsequent test
-
-## [1.0.0] - 2026-05-08
+First public release.
 
 ### Added
-- Initial public release of Zenmanage Flutter SDK
-- Flag client for Dart and Flutter applications
-- Async initialization with automatic API integration
-- Local caching with three backends:
-  - InMemoryCache (ephemeral, fastest)
-  - SharedPreferencesCache (persistent, Flutter-specific)
-  - NullCache (no caching, testing-friendly)
-- Typed value accessors: `asBool()`, `asString()`, `asNumber()`, `asJson()`, `asList()`
-- Context support for personalized flag evaluation
-  - User contexts
-  - Organization contexts
-  - Account contexts
-  - Custom attributes
-- A/B testing and percentage rollouts
-- Gradual feature rollouts
-- Error handling with typed exceptions
-  - ConfigurationException
-  - ApiException
-  - FlagNotFoundException
-  - TypeConversionException
-  - And more
-- Comprehensive test suite (90%+ coverage)
-- Full API documentation
-- Example applications for common use cases:
-  - Simple flags
-  - Context-based flags
-  - A/B testing
-  - Percentage rollouts
-  - Caching strategies
-  - Default values and error handling
-- Mobile-only token validation (mob_* tokens)
+- Flag client for Dart and Flutter apps. `Zenmanage.initialize()` fetches the rules once, and flags are then evaluated locally with `flags().single()`, `singleOrDefault()` and `all()`.
+- Flutter bindings for app-wide initialization and widget-level use: `ZenmanageProvider`, `ZenmanageInitializer` and `ZenmanageFlagBuilder`.
+- Typed value accessors: `asBool()`, `asString()`, `asNumber()`, `asInt()`, `asDouble()`, `asJson()` and `asList()`. Calling the "wrong" accessor never throws; each one falls back to a safe zero value, the same as the other Zenmanage SDKs.
+- `boolean`, `string`, `number` and `json` flags. A `Map` or `List` default passed to `single()` produces a `json` flag. A flag with a type this release doesn't recognize falls back to your default instead of failing the whole rules payload.
+- Local rule evaluation with user, organization and account contexts and custom attributes, percentage rollouts, and A/B variants. Rules are evaluated from the lowest `position` to the highest and the first match wins.
+- Three rule caches: `InMemoryCache` (default), `SharedPreferencesCache` (persists rules on the device) and `NullCache`.
+- `single()` falls back to the default you provide, instead of throwing, when the rules can't be loaded (for example an invalid key or no network).
+- Failed rules fetches are retried: up to 3 attempts with 100ms then 200ms of backoff, the same as the other Zenmanage SDKs. A rejected token (HTTP 401/403) is not retried.
+- `ConfigBuilder.withRequestTimeout(Duration)` sets how long a rules request may wait. It defaults to 10 seconds; usage reports are capped at 5 seconds.
+- `ConfigBuilder.withLogger(ZenmanageLogger)` routes SDK diagnostics (fetch attempts, retries, failures) to your own logging. Nothing is logged by default.
+- `zenmanageSdkVersion`, the version reported to the API in the `X-ZEN-CLIENT-AGENT` header (`zenmanage-flutter/<version>`).
+- Typed exceptions: `ConfigurationException`, `ApiException`, `FlagNotFoundException`, `TypeConversionException`, `RuleEvaluationException` and `CacheException`.
+- Examples for common use cases, including a runnable Flutter example app in `example/`.
 
 ### Security
-- SSL/TLS for all API communication
-- Token-based authentication
-- No sensitive data stored in logs
-
-### Performance
-- ~1ms flag evaluation time with cached rules
-- Efficient memory usage
-- Async operations to avoid blocking UI
-
-## [Unreleased]
-
-### Planned
-- Widget helpers for Flutter integration
-- Provider package integration
-- Riverpod support
-- GetX support
-- More advanced rule evaluation
-- Offline-first mode with syncing
+- Environment tokens must be a mobile key (`mob_...`) or a client key (`cli_...`; use this one for Flutter web, which has no mobile key). Server keys (`srv_...`) are rejected when the configuration is created: a server key bundled into an app can be extracted by anyone.
+- All API communication uses HTTPS.
