@@ -254,7 +254,7 @@ example/
 
 ## Release Process
 
-See [doc/PUBLISHING.md](doc/PUBLISHING.md) for the full release process.
+Releases are cut by the Zenmanage maintainers. If you think a change is ready to ship, say so on your pull request.
 
 ## Questions?
 

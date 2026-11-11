@@ -14,8 +14,10 @@ void main() {
 
   test('the runtime version matches the newest released CHANGELOG entry', () {
     final changelog = File('CHANGELOG.md').readAsStringSync();
-    // Skip "## [Unreleased]"; take the first "## [x.y.z]" heading.
-    final match = RegExp(r'^## \[(\d+\.\d+\.\d+)\]', multiLine: true).firstMatch(changelog);
+    // Skip "## [Unreleased]"; take the first "## x.y.z" heading. pub.dev parses
+    // this format (no brackets); tolerate "## [x.y.z]" too.
+    final match =
+        RegExp(r'^## \[?(\d+\.\d+\.\d+)\]?', multiLine: true).firstMatch(changelog);
 
     expect(match, isNotNull, reason: 'CHANGELOG.md has no released version heading');
     expect(zenmanageSdkVersion, equals(match!.group(1)));

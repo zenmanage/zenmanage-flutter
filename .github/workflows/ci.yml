@@ -27,6 +27,12 @@ jobs:
       - name: Analyze
         run: flutter analyze
 
+      - name: Analyze example app
+        working-directory: example
+        run: |
+          flutter pub get
+          flutter analyze
+
       - name: Test
         run: flutter test --coverage
 

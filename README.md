@@ -431,10 +431,12 @@ See the [example/](example/) directory for complete examples:
 - [defaults.dart](example/defaults.dart) - Default values and error handling
 - [lib/main.dart](example/lib/main.dart) - Runnable Flutter app example
 
-Run examples with:
+Run a script example from the package root with `flutter test` (plain `dart` can't load a Flutter package), or run the example app on a device:
 
 ```bash
-dart example/simple_flags.dart
+flutter test example/simple_flags.dart
+
+cd example && flutter run
 ```
 
 ## API Reference
