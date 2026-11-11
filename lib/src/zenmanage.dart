@@ -1,5 +1,5 @@
 /// Main Zenmanage SDK class
-library zenmanage.main;
+library;
 
 import 'api_client.dart';
 import 'config/config.dart';

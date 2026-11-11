@@ -1,5 +1,5 @@
 /// Environment token validation
-library zenmanage.environment_token;
+library;
 
 import '../exceptions/exceptions.dart';
 

@@ -1,5 +1,5 @@
 /// SDK configuration model
-library zenmanage.config;
+library;
 
 import '../cache/cache.dart';
 import '../logging/logger.dart';

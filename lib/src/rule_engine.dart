@@ -1,5 +1,5 @@
 /// Rule engine for local flag evaluation
-library zenmanage.rule_engine;
+library;
 
 import 'dart:convert';
 import 'dart:developer' as developer;

@@ -1,5 +1,5 @@
 /// API client for fetching rules from Zenmanage API
-library zenmanage.api_client;
+library;
 
 import 'package:http/http.dart' as http;
 import 'dart:convert';

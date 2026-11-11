@@ -1,5 +1,5 @@
 /// Logging interface for SDK diagnostics
-library zenmanage.logger;
+library;
 
 /// Receives diagnostic messages from the SDK.
 ///

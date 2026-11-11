@@ -1,5 +1,5 @@
 /// Context models for providing user and entity information to Zenmanage
-library zenmanage.context;
+library;
 
 /// Represents context information about a user, organization, or other entity
 /// for feature flag evaluation

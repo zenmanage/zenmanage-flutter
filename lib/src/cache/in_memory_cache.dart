@@ -1,5 +1,5 @@
 /// In-memory cache implementation
-library zenmanage.cache.in_memory;
+library;
 
 import 'cache.dart';
 

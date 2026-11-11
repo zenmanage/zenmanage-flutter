@@ -1,4 +1,4 @@
-library zenmanage.flutter.provider;
+library;
 
 import 'package:flutter/widgets.dart';
 
