@@ -70,6 +70,8 @@ class Zenmanage {
       enableUsageReporting: config.enableUsageReporting,
       sdkVersion: config.sdkVersion,
       clientAgent: config.clientAgent,
+      requestTimeout: config.requestTimeout,
+      logger: config.logger,
     );
 
     final ruleEngine = RuleEngine();

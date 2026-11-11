@@ -42,7 +42,7 @@ flutter pub get
 
 ### 1. Get Your Mobile Token
 
-Get your mobile token (`mob_...`) from [zenmanage.com](https://zenmanage.com). Mobile tokens are required for Flutter apps.
+Get your mobile token (`mob_...`) from [zenmanage.com](https://zenmanage.com). Use a client token (`cli_...`) instead for Flutter web. Server tokens are not accepted in Flutter apps.
 
 ### 2. Initialize the SDK
 
@@ -274,7 +274,7 @@ final zenmanage = Zenmanage(
 
 ### Environment Token
 
-Only mobile tokens (`mob_*`) are supported. Client and server tokens are rejected:
+Use a mobile key (`mob_*`) in iOS and Android apps, or a client key (`cli_*`) for Flutter web, where there is no mobile key. Server keys (`srv_*`) are rejected when the config is built: a key bundled into an app can be extracted by anyone.
 
 ```dart
 ConfigBuilder.create()
@@ -315,6 +315,19 @@ ConfigBuilder.create()
     .build()
 ```
 
+### Request Timeout and Retries
+
+A rules request waits up to 10 seconds by default. If it fails, the SDK tries again, up to 3 attempts in total with 100ms and then 200ms of backoff. A rejected token (HTTP 401 or 403) is not retried, since another attempt with the same token can't succeed. This is the same behavior as the other Zenmanage SDKs.
+
+```dart
+ConfigBuilder.create()
+    .withEnvironmentToken('mob_your_token_here')
+    .withRequestTimeout(const Duration(seconds: 5)) // Default: 10 seconds
+    .build()
+```
+
+Usage reports are fire-and-forget and wait at most 5 seconds (or the request timeout, if that is shorter).
+
 ## Error Handling
 
 The SDK throws typed exceptions for different error conditions:
@@ -339,17 +352,33 @@ try {
 
 ## Logging
 
-The SDK logs important events. Configure logging based on your app's logger:
+The SDK logs nothing by default. To see what it is doing (rule fetch attempts, retries, failures), pass a `ZenmanageLogger` to the config:
 
 ```dart
-// Zenmanage logs to stderr by default
-// You can capture logs by setting up Flutter's logging
-import 'package:logging/logging.dart';
+import 'package:zenmanage/zenmanage.dart';
 
-Logger.root.level = Level.ALL;
-Logger.root.onRecord.listen((record) {
-  print('${record.level.name}: ${record.message}');
-});
+class AppLogger implements ZenmanageLogger {
+  @override
+  void debug(String message, [Map<String, Object?>? metadata]) =>
+      debugPrint('[zenmanage] $message ${metadata ?? ''}');
+
+  @override
+  void info(String message, [Map<String, Object?>? metadata]) =>
+      debugPrint('[zenmanage] $message ${metadata ?? ''}');
+
+  @override
+  void warn(String message, [Map<String, Object?>? metadata]) =>
+      debugPrint('[zenmanage] WARN $message ${metadata ?? ''}');
+
+  @override
+  void error(String message, [Map<String, Object?>? metadata]) =>
+      debugPrint('[zenmanage] ERROR $message ${metadata ?? ''}');
+}
+
+final config = ConfigBuilder.create()
+    .withEnvironmentToken('mob_your_token_here')
+    .withLogger(AppLogger())
+    .build();
 ```
 
 ## Testing
@@ -458,6 +487,8 @@ class ConfigBuilder {
   ConfigBuilder withApiEndpoint(String endpoint);
   ConfigBuilder withCacheTtl(int ttl);
   ConfigBuilder withUsageReporting(bool enabled);
+  ConfigBuilder withRequestTimeout(Duration timeout);
+  ConfigBuilder withLogger(ZenmanageLogger logger);
   Config build();
 }
 ```
@@ -537,7 +568,7 @@ class Context {
 
 ### "Invalid environment token"
 
-Ensure you're using a mobile token that starts with `mob_`. Get one from [zenmanage.com](https://zenmanage.com).
+Ensure you're using a mobile token that starts with `mob_` (or a client token that starts with `cli_` for Flutter web). Server tokens (`srv_`) are rejected. Get one from [zenmanage.com](https://zenmanage.com).
 
 ### "Flag not found"
 

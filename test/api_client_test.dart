@@ -88,6 +88,31 @@ void main() {
       );
     });
 
+    test('throws ConfigurationException for a server key without sending a request', () async {
+      handler = (request) => respondJson(request, 200, {'ok': true});
+
+      final client = ApiClient(environmentToken: 'srv_test', apiEndpoint: endpoint);
+
+      await expectLater(client.fetchRules(), throwsA(isA<ConfigurationException>()));
+      expect(requestedUris, isEmpty);
+    });
+
+    test('accepts a client key', () async {
+      handler = (request) {
+        if (request.uri.path == '/v1/flag-json') {
+          respondJson(request, 200, {
+            'data': {'cdn': endpoint, 'path': '/rules.json'},
+          });
+        } else {
+          respondJson(request, 200, {'flags': <String, dynamic>{}});
+        }
+      };
+
+      final client = ApiClient(environmentToken: 'cli_test', apiEndpoint: endpoint);
+
+      expect((await client.fetchRules())['rules'], isNotEmpty);
+    });
+
     test('throws ApiException when metadata request is unauthorized', () async {
       handler = (request) => respondJson(request, 401, {'error': 'unauthorized'});
 

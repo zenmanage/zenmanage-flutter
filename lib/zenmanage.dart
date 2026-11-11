@@ -15,4 +15,6 @@ export 'src/cache/in_memory_cache.dart';
 export 'src/cache/null_cache.dart';
 export 'src/cache/shared_preferences_cache.dart';
 export 'src/exceptions/exceptions.dart';
+export 'src/logging/logger.dart';
+export 'src/version.dart';
 export 'src/flutter/zenmanage_provider.dart';
