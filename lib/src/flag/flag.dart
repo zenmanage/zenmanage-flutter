@@ -1,5 +1,5 @@
 /// Flag model for type-safe access to feature flag values
-library zenmanage.flag;
+library;
 
 import '../exceptions/exceptions.dart';
 

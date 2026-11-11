@@ -1,5 +1,5 @@
 /// Exception classes for the Zenmanage SDK
-library zenmanage.exceptions;
+library;
 
 /// Base exception class for all Zenmanage errors
 abstract base class ZenmanageException implements Exception {

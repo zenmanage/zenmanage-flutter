@@ -1,5 +1,5 @@
 /// SharedPreferences-based cache implementation for Flutter
-library zenmanage.cache.shared_preferences;
+library;
 
 import 'package:shared_preferences/shared_preferences.dart';
 

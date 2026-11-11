@@ -1,5 +1,5 @@
 /// Cache interface for Zenmanage
-library zenmanage.cache;
+library;
 
 /// Interface for caching rules and flag evaluations
 abstract interface class Cache {

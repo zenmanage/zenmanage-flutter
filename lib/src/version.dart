@@ -1,5 +1,5 @@
 /// SDK version constant
-library zenmanage.version;
+library;
 
 /// The SDK version reported to the API in the `X-ZEN-CLIENT-AGENT` header
 /// (as `zenmanage-flutter/<version>`).

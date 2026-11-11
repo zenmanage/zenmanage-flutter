@@ -2,7 +2,7 @@
 ///
 /// Official SDK for feature flags and experiments in Dart and Flutter applications.
 /// Provides local evaluation of feature flags with remote rule fetching and caching.
-library zenmanage;
+library;
 
 export 'src/zenmanage.dart';
 export 'src/config/config.dart';

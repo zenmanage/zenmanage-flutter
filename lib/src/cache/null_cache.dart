@@ -1,5 +1,5 @@
 /// Null cache implementation (no caching)
-library zenmanage.cache.nocache;
+library;
 
 import 'cache.dart';
 

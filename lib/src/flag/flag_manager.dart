@@ -1,5 +1,5 @@
 /// Flag manager for evaluating feature flags
-library zenmanage.flag_manager;
+library;
 
 import 'dart:async';
 

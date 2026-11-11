@@ -1,5 +1,5 @@
 /// Configuration builder for easy SDK setup
-library zenmanage.config_builder;
+library;
 
 import 'config.dart';
 import 'environment_token.dart';
