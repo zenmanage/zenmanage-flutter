@@ -85,7 +85,12 @@ flutter test test/flag_test.dart
 
 # Watch mode (re-run on changes)
 flutter test --watch
+
+# Run the integration test on a device, simulator or desktop target
+cd example && flutter test integration_test -d <device id>
 ```
+
+CI runs the integration test on Android, iOS, macOS, Linux and Windows. See `example/README.md` for running it locally.
 
 ### Documentation
 
