@@ -49,6 +49,7 @@ jobs:
   publish:
     needs: check
     permissions:
+      contents: read # The reusable workflow's jobs can't be granted more than this
       id-token: write # Required for OIDC token minting
     # Matches the optional "Require GitHub Actions environment" setting on
     # pub.dev. Add required reviewers to this environment in the repo settings
