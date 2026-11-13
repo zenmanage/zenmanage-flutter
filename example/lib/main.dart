@@ -1,3 +1,7 @@
+// The widgets here need Material, and package:material_ui isn't available on
+// the older Flutter versions this package still supports.
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
 import 'package:zenmanage/zenmanage.dart';
 

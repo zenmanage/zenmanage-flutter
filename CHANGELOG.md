@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- `single()` now returns the `defaultValue` you pass when the rules can't be loaded (for example an invalid key or no network) and nothing is cached. In 1.0.0 it threw an `ApiException` instead, even though the 1.0.0 notes said it wouldn't. Without a `defaultValue`, `single()` still throws.
+
 ## 1.0.0
 
 Released on 2026-11-11. First public release.

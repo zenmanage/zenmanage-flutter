@@ -76,6 +76,12 @@ class FlagManager {
   /// Evaluates a single flag by key
   ///
   /// Fetches rules from the API if not cached, then evaluates locally.
+  ///
+  /// When [defaultValue] is given, it is returned (and reported as the default
+  /// used) if the flag isn't in the rules, and also if the rules can't be
+  /// loaded at all: an invalid key, no network, and nothing cached.
+  ///
+  /// Without a [defaultValue]:
   /// Throws [FlagNotFoundException] if the flag doesn't exist.
   /// Throws [ApiException] if the API request fails and no cached rules exist.
   ///
@@ -87,14 +93,24 @@ class FlagManager {
   /// }
   /// ```
   Future<Flag> single(String flagKey, {dynamic defaultValue}) async {
-    final rules = await _getRulesJson();
+    // If the rules can't be loaded, serve the caller's default instead of
+    // throwing. Without a default there is nothing to serve, so surface the
+    // load error.
+    String? rules;
+    try {
+      rules = await _getRulesJson();
+    } on ZenmanageException {
+      if (defaultValue == null) rethrow;
+    }
 
-    final flag = _ruleEngine.evaluateFlag(
-      flagKey: flagKey,
-      rulesJson: rules,
-      contexts: _contexts.isNotEmpty ? _contexts : null,
-      defaultValue: defaultValue,
-    );
+    final flag = rules == null
+        ? null
+        : _ruleEngine.evaluateFlag(
+            flagKey: flagKey,
+            rulesJson: rules,
+            contexts: _contexts.isNotEmpty ? _contexts : null,
+            defaultValue: defaultValue,
+          );
 
     if (flag != null) {
       // Report usage in background, including the default value so it's
