@@ -10,16 +10,10 @@ on:
       - 'v[0-9]+.[0-9]+.[0-9]+'
 
 jobs:
-  publish:
+  check:
     runs-on: ubuntu-latest
-    # Matches the optional "Require GitHub Actions environment" setting on
-    # pub.dev. Add required reviewers to this environment in the repo settings
-    # to gate each publish behind an approval.
-    environment: pub.dev
     permissions:
       contents: read
-      id-token: write # Required for authentication using OIDC
-
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -49,5 +43,16 @@ jobs:
       - name: Test
         run: flutter test
 
-      - name: Publish
-        run: flutter pub publish --force
+  # dart-lang's reusable workflow installs Flutter, builds the package archive
+  # and publishes it with the OIDC token it sets up itself. A plain
+  # `flutter pub publish` here falls back to an interactive Google sign-in.
+  publish:
+    needs: check
+    permissions:
+      id-token: write # Required for OIDC token minting
+    # Matches the optional "Require GitHub Actions environment" setting on
+    # pub.dev. Add required reviewers to this environment in the repo settings
+    # to gate each publish behind an approval.
+    uses: dart-lang/setup-dart/.github/workflows/publish.yml@2286a0c042b44434fe26d292bbce8d34f7ec662b # v1.8.2
+    with:
+      environment: pub.dev
