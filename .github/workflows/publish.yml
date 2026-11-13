@@ -27,7 +27,8 @@ jobs:
       - name: Check the tag matches pubspec.yaml
         run: |
           TAG_VERSION="${GITHUB_REF_NAME#v}"
-          PUBSPEC_VERSION="$(sed -n 's/^version:[[:space:]]*\([^[:space:]]*\).*/\1/p' pubspec.yaml | head -n 1)"
+          # Strip optional quotes: `version: "1.0.1"` is valid YAML too.
+          PUBSPEC_VERSION="$(sed -n 's/^version:[[:space:]]*\([^[:space:]]*\).*/\1/p' pubspec.yaml | head -n 1 | tr -d "'\"")"
           echo "Tag: ${TAG_VERSION}, pubspec.yaml: ${PUBSPEC_VERSION}"
           if [[ "${TAG_VERSION}" != "${PUBSPEC_VERSION}" ]]; then
             echo "The tag ${GITHUB_REF_NAME} does not match pubspec.yaml version ${PUBSPEC_VERSION}"
