@@ -107,6 +107,23 @@ Future<void> _clearStoredRules() async {
   _simulateRestart();
 }
 
+/// Pumps frames until [finder] matches, or fails after [timeout]. Real
+/// targets can be slow (a cold emulator, a busy CI runner), so this waits for
+/// the thing the test needs rather than for the UI to go idle.
+Future<void> _pumpUntilFound(
+  WidgetTester tester,
+  Finder finder, {
+  Duration timeout = const Duration(seconds: 30),
+}) async {
+  final deadline = DateTime.now().add(timeout);
+  while (finder.evaluate().isEmpty) {
+    if (DateTime.now().isAfter(deadline)) {
+      fail('Timed out after $timeout waiting for $finder');
+    }
+    await tester.pump(const Duration(milliseconds: 100));
+  }
+}
+
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
@@ -173,7 +190,7 @@ void main() {
           ),
         ),
       );
-      await tester.pumpAndSettle();
+      await _pumpUntilFound(tester, find.text('flag: Hello from the rules'));
 
       expect(find.text('flag: Hello from the rules'), findsOneWidget);
       expect(server.metadataRequests, 1);
@@ -191,7 +208,7 @@ void main() {
           ),
         ),
       );
-      await tester.pumpAndSettle();
+      await _pumpUntilFound(tester, find.text('new-dashboard is enabled'));
 
       expect(find.text('new-dashboard is enabled'), findsOneWidget);
     });
