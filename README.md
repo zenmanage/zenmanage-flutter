@@ -164,6 +164,8 @@ final enterpriseFeature = await zenmanage.flags()
     .single('enterprise-analytics');
 ```
 
+Each `flags()` call gives you a new manager, so a context you set on it applies to that manager only and reads on different managers can't affect each other. If you keep hold of a manager and reuse it, it keeps its context until you change it with `withContext()` / `withContexts()` or remove it with `clearContext()`.
+
 ### Handling Missing Flags
 
 ```dart
@@ -451,7 +453,7 @@ Main SDK class:
 ```dart
 class Zenmanage {
   Future<void> initialize({List<Context>? contexts}); // Async startup prefetch
-  FlagManager flags(); // Get the flag manager
+  FlagManager flags(); // A new flag manager (own context) on every call
   String get cacheBackendName; // Get current cache backend name
   Future<void> clearCache(); // Clear all cached rules
 }

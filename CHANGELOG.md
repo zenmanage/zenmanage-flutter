@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - `single()` now returns the `defaultValue` you pass when the rules can't be loaded (for example an invalid key or no network) and nothing is cached. In 1.0.0 it threw an `ApiException` instead, even though the 1.0.0 notes said it wouldn't. Without a `defaultValue`, `single()` still throws.
+- `zenmanage.flags()` now returns a new `FlagManager` on every call, so a context set with `withContext()` or `withContexts()` applies to that read only. Before, every call returned the same manager: a context stuck until you called `clearContext()`, and two reads running at once with different contexts could evaluate (and report usage) for each other's context. All managers share one set of fetched rules, so this adds no extra requests. `ZenmanageFlagBuilder` no longer has this problem either. `initialize(contexts: ...)` now uses its contexts for the startup fetch only; it no longer sets them on later reads.
 
 ## 1.0.0
 

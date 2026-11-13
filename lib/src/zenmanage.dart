@@ -44,8 +44,12 @@ class Zenmanage {
   final Config _config;
   final FlagManager _flagManager;
 
-  /// Returns the flag manager for evaluating flags
-  FlagManager flags() => _flagManager;
+  /// Returns a flag manager for evaluating flags.
+  ///
+  /// Every call returns a new manager with no context, so a context set with
+  /// `withContext()` applies to that read only. All managers share one set of
+  /// fetched rules.
+  FlagManager flags() => _flagManager.fork();
 
   /// Returns the current cache backend name
   String get cacheBackendName => _config.cache.backendName;
