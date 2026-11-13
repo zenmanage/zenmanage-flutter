@@ -185,7 +185,7 @@ void main() {
       expect(flag.isEnabled(), isTrue);
     });
 
-    test('rethrows the API error when there is no cached fallback', () async {
+    test('rethrows the API error when there is no cached fallback and no default', () async {
       failMetadata = true;
       final manager = buildManager(cache: NullCache());
 
@@ -193,6 +193,65 @@ void main() {
         manager.single('anything'),
         throwsA(isA<ApiException>()),
       );
+    });
+
+    test('returns the default when the rules cannot be loaded and nothing is cached', () async {
+      failMetadata = true;
+      final manager = buildManager(cache: NullCache());
+
+      final flag = await manager.single('new-dashboard', defaultValue: false);
+
+      expect(flag.value, isFalse);
+      expect(flag.type, equals('boolean'));
+      expect(flag.isEnabled(), isFalse);
+    });
+
+    test('returns a json default when the rules cannot be loaded', () async {
+      failMetadata = true;
+      final manager = buildManager(cache: NullCache());
+      final defaultValue = {'primaryColor': '#000', 'fontSize': 14};
+
+      final flag = await manager.single('theme', defaultValue: defaultValue);
+
+      expect(flag.type, equals('json'));
+      expect(flag.asJson(), equals(defaultValue));
+    });
+
+    test('returns a falsy default instead of throwing when the rules cannot be loaded', () async {
+      failMetadata = true;
+      final manager = buildManager(cache: NullCache());
+
+      final flag = await manager.single('max-items', defaultValue: 0);
+
+      expect(flag.type, equals('number'));
+      expect(flag.asInt(), equals(0));
+    });
+
+    test('prefers the persistent cache over the default when the fetch fails', () async {
+      final cache = InMemoryCache();
+      await cache.setRules(jsonEncode({
+        'flags': {
+          'cached-flag': {'value': true, 'type': 'boolean'},
+        },
+      }));
+      failMetadata = true;
+      final manager = buildManager(cache: cache);
+
+      final flag = await manager.single('cached-flag', defaultValue: false);
+
+      expect(flag.isEnabled(), isTrue);
+    });
+
+    test('recovers on the next call once the rules can be loaded again', () async {
+      failMetadata = true;
+      final manager = buildManager(cache: NullCache());
+
+      final fallback = await manager.single('new-dashboard', defaultValue: false);
+      expect(fallback.isEnabled(), isFalse);
+
+      failMetadata = false;
+      final recovered = await manager.single('new-dashboard', defaultValue: false);
+      expect(recovered.isEnabled(), isTrue);
     });
   });
 
