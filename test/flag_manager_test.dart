@@ -260,15 +260,22 @@ void main() {
     late String endpoint;
     late List<HttpHeaders> usageHeaders;
     late Map<String, dynamic> rulesPayload;
+    late bool failRules;
 
     setUp(() async {
       usageHeaders = [];
+      failRules = false;
       rulesPayload = {'flags': <String, dynamic>{}};
       server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
       endpoint = 'http://${server.address.address}:${server.port}';
 
       server.listen((request) async {
         if (request.uri.path == '/v1/flag-json') {
+          if (failRules) {
+            request.response.statusCode = 500;
+            await request.response.close();
+            return;
+          }
           request.response.headers.contentType = ContentType.json;
           request.response.write(jsonEncode({
             'data': {'cdn': endpoint, 'path': '/rules.json'},
@@ -318,6 +325,32 @@ void main() {
       await waitForUsageReport();
       expect(usageHeaders, hasLength(1));
       expect(usageHeaders.first.value('X-ZEN-DEFAULT-VALUE'), equals('{"missing-flag":true}'));
+    });
+
+    test('reports the default it used when the rules could not be loaded', () async {
+      failRules = true;
+      final manager = buildManager();
+
+      final flag = await manager.single('new-checkout', defaultValue: false);
+
+      expect(flag.value, isFalse);
+
+      await waitForUsageReport();
+      expect(usageHeaders, hasLength(1));
+      expect(usageHeaders.first.value('X-ZEN-DEFAULT-VALUE'), equals('{"new-checkout":false}'));
+    });
+
+    test('does not report usage when the rules could not be loaded and there is no default', () async {
+      failRules = true;
+      final manager = buildManager();
+
+      await expectLater(
+        manager.single('new-checkout'),
+        throwsA(isA<ApiException>()),
+      );
+
+      await waitForUsageReport();
+      expect(usageHeaders, isEmpty);
     });
 
     test('throws FlagNotFoundException when no defaultValue is supplied and flag is missing', () async {
