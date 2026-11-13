@@ -164,7 +164,7 @@ final enterpriseFeature = await zenmanage.flags()
     .single('enterprise-analytics');
 ```
 
-Each `flags()` call gives you a manager of its own, so a context applies to that read only and reads running at the same time can't affect each other.
+Each `flags()` call gives you a new manager, so a context you set on it applies to that manager only and reads on different managers can't affect each other. If you keep hold of a manager and reuse it, it keeps its context until you change it with `withContext()` / `withContexts()` or remove it with `clearContext()`.
 
 ### Handling Missing Flags
 

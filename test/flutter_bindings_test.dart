@@ -19,6 +19,9 @@ class _FakeApiClient extends ApiClient {
   final String rulesJson;
   final bool shouldFail;
 
+  /// The context of every usage report, in the order they were made.
+  final List<Context?> reportedContexts = [];
+
   @override
   Future<Map<String, dynamic>> fetchRules({List<Context>? contexts}) async {
     if (shouldFail) {
@@ -33,18 +36,24 @@ class _FakeApiClient extends ApiClient {
     required dynamic flagValue,
     Context? context,
     dynamic defaultValue,
-  }) async {}
+  }) async {
+    reportedContexts.add(context);
+  }
 }
 
 class _FakeZenmanage extends Zenmanage {
   _FakeZenmanage({required String rulesJson, bool shouldFail = false})
+      : this._(_FakeApiClient(rulesJson: rulesJson, shouldFail: shouldFail));
+
+  _FakeZenmanage._(this.api)
       : _flagManager = FlagManager(
-          apiClient: _FakeApiClient(rulesJson: rulesJson, shouldFail: shouldFail),
+          apiClient: api,
           cache: NullCache(),
           ruleEngine: RuleEngine(),
         ),
         super(ConfigBuilder.create().withEnvironmentToken('mob_test_token').build());
 
+  final _FakeApiClient api;
   final FlagManager _flagManager;
 
   @override
@@ -294,6 +303,42 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('true'), findsOneWidget);
+    });
+
+    testWidgets(
+        'ZenmanageFlagBuilder keeps each widget\'s context apart from its siblings',
+        (tester) async {
+      final zenmanage = _FakeZenmanage(rulesJson: _rulesWithDashboard);
+      final alice = Context.user(id: 'alice');
+      final bob = Context.user(id: 'bob');
+
+      Widget builderFor(Context? context) => ZenmanageFlagBuilder(
+            flagKey: 'new-dashboard',
+            defaultValue: false,
+            context: context,
+            builder: (_, snapshot) =>
+                Text(snapshot.hasData ? 'done' : 'loading'),
+          );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: ZenmanageProvider(
+            zenmanage: zenmanage,
+            child: Column(
+              children: [builderFor(alice), builderFor(null), builderFor(bob)],
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('done'), findsNWidgets(3));
+      // Each widget reported for its own context. The one with no context
+      // didn't pick up a sibling's.
+      expect(
+        zenmanage.api.reportedContexts,
+        unorderedEquals(<Context?>[alice, null, bob]),
+      );
     });
 
     testWidgets('ZenmanageFlagBuilder reloads when flagKey changes',
