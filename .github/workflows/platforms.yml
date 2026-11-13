@@ -1,0 +1,175 @@
+name: Platforms
+
+# Runs example/integration_test on each target the package lists on pub.dev:
+# Android, iOS, macOS, Linux and Windows. The test starts its own rules server
+# on the loopback address, so it needs no secrets and no network access.
+#
+# Web is covered by the unit tests plus the "flutter build web" smoke job
+# below: browsers can't open a listening socket, so the loopback server the
+# integration test uses isn't available there.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  android:
+    name: Android emulator
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          channel: stable
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Install dependencies
+        working-directory: example
+        run: flutter pub get
+
+      - name: Run integration test
+        uses: reactivecircus/android-emulator-runner@b530d96654c385303d652368551fb075bc2f0b6b # v2.35.0
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          working-directory: example
+          script: flutter test integration_test
+
+  ios:
+    name: iOS simulator
+    runs-on: macos-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          channel: stable
+
+      - name: Boot an iPhone simulator
+        id: simulator
+        run: |
+          UDID=$(xcrun simctl list devices available iPhone | grep -m1 -oE '[0-9A-F]{8}-([0-9A-F]{4}-){3}[0-9A-F]{12}')
+          if [[ -z "${UDID}" ]]; then
+            echo "No iPhone simulator is available on this runner"
+            xcrun simctl list devices available
+            exit 1
+          fi
+          xcrun simctl boot "${UDID}"
+          xcrun simctl bootstatus "${UDID}" -b
+          echo "udid=${UDID}" >> "$GITHUB_OUTPUT"
+
+      - name: Install dependencies
+        working-directory: example
+        run: flutter pub get
+
+      - name: Run integration test
+        working-directory: example
+        run: flutter test integration_test -d "${{ steps.simulator.outputs.udid }}"
+
+  desktop:
+    name: ${{ matrix.platform }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macos
+            os: macos-latest
+          - platform: linux
+            os: ubuntu-latest
+          - platform: windows
+            os: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          channel: stable
+
+      - name: Install Linux build dependencies
+        if: matrix.platform == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev xvfb
+
+      # The example only commits its android/ and ios/ folders, so create the
+      # desktop runner here.
+      - name: Create the ${{ matrix.platform }} runner
+        working-directory: example
+        shell: bash
+        run: |
+          flutter config --enable-${{ matrix.platform }}-desktop
+          flutter create --platforms=${{ matrix.platform }} --project-name zenmanage_example --org com.zenmanage .
+          rm -rf test
+
+      # The macOS app is sandboxed; the test both listens on and connects to
+      # the loopback address, which needs both network entitlements.
+      - name: Allow network access in the macOS sandbox
+        if: matrix.platform == 'macos'
+        working-directory: example/macos/Runner
+        run: |
+          for file in DebugProfile.entitlements Release.entitlements; do
+            for key in network.client network.server; do
+              /usr/libexec/PlistBuddy -c "Add :com.apple.security.${key} bool true" "${file}" 2>/dev/null \
+                || /usr/libexec/PlistBuddy -c "Set :com.apple.security.${key} true" "${file}"
+            done
+          done
+
+      - name: Install dependencies
+        working-directory: example
+        run: flutter pub get
+
+      - name: Run integration test
+        if: matrix.platform != 'linux'
+        working-directory: example
+        run: flutter test integration_test -d ${{ matrix.platform }}
+
+      - name: Run integration test (virtual display)
+        if: matrix.platform == 'linux'
+        working-directory: example
+        run: xvfb-run -a flutter test integration_test -d linux
+
+  web:
+    name: Web build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          channel: stable
+
+      - name: Create the web runner
+        working-directory: example
+        run: |
+          flutter create --platforms=web --project-name zenmanage_example --org com.zenmanage .
+          rm -rf test
+          flutter pub get
+
+      - name: Build
+        working-directory: example
+        run: flutter build web
