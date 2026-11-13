@@ -48,7 +48,7 @@ class _FakeZenmanage extends Zenmanage {
   final FlagManager _flagManager;
 
   @override
-  FlagManager flags() => _flagManager;
+  FlagManager flags() => _flagManager.fork();
 
   @override
   Future<void> initialize({List<Context>? contexts}) =>

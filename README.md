@@ -164,6 +164,8 @@ final enterpriseFeature = await zenmanage.flags()
     .single('enterprise-analytics');
 ```
 
+Each `flags()` call gives you a manager of its own, so a context applies to that read only and reads running at the same time can't affect each other.
+
 ### Handling Missing Flags
 
 ```dart
@@ -451,7 +453,7 @@ Main SDK class:
 ```dart
 class Zenmanage {
   Future<void> initialize({List<Context>? contexts}); // Async startup prefetch
-  FlagManager flags(); // Get the flag manager
+  FlagManager flags(); // A new flag manager (own context) on every call
   String get cacheBackendName; // Get current cache backend name
   Future<void> clearCache(); // Clear all cached rules
 }
