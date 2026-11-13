@@ -153,12 +153,12 @@ class _ZenmanageFlagBuilderState extends State<ZenmanageFlagBuilder> {
 
   Future<Flag> _loadFlag(BuildContext context) async {
     final zenmanage = ZenmanageProvider.of(context);
+    // flags() returns a manager of its own, so this widget's context can't
+    // leak into (or be replaced by) another widget's read.
     final manager = zenmanage.flags();
 
     if (widget.context != null) {
       manager.withContext(widget.context!);
-    } else {
-      manager.clearContext();
     }
 
     if (widget.defaultValue != null) {

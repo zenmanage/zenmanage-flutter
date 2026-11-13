@@ -10,9 +10,20 @@ import '../cache/cache.dart';
 import '../context/context.dart';
 import '../exceptions/exceptions.dart';
 
+/// The rules fetched from the API, shared by a [FlagManager] and every manager
+/// forked from it so they all read (and refresh) one copy.
+class _RulesStore {
+  String? cachedRules;
+  DateTime? lastFetchTime;
+}
+
 /// Manages feature flag evaluation
 ///
 /// Provides methods to check flags and retrieve flag values with type-safe accessors.
+///
+/// The context set with [withContext] / [withContexts] belongs to this manager
+/// only. [Zenmanage.flags] returns a new manager on every call, so a read never
+/// picks up the context of another read.
 class FlagManager {
   /// Creates a flag manager
   FlagManager({
@@ -23,20 +34,37 @@ class FlagManager {
   })  : _apiClient = apiClient,
         _cache = cache,
         _ruleEngine = ruleEngine,
-        _cacheTtl = cacheTtl;
+        _cacheTtl = cacheTtl,
+        _rules = _RulesStore();
+
+  FlagManager._fork(FlagManager parent)
+      : _apiClient = parent._apiClient,
+        _cache = parent._cache,
+        _ruleEngine = parent._ruleEngine,
+        _cacheTtl = parent._cacheTtl,
+        _rules = parent._rules;
 
   final ApiClient _apiClient;
   final Cache _cache;
   final RuleEngine _ruleEngine;
   final int _cacheTtl;
+  final _RulesStore _rules;
   final List<Context> _contexts = [];
-  String? _cachedRules;
-  DateTime? _lastFetchTime;
+
+  /// Returns a new manager with no context that shares this manager's rules
+  /// and caches.
+  ///
+  /// Each read should use its own manager, so that its context can't be
+  /// replaced by another read that is in flight at the same time. This is what
+  /// [Zenmanage.flags] does for you.
+  FlagManager fork() => FlagManager._fork(this);
 
   /// Sets context for the next flag evaluations
   ///
   /// Context is used for personalization and targeting. Call this before
   /// checking flags if you want to provide user/entity information.
+  ///
+  /// The context applies to this manager only.
   ///
   /// Example:
   /// ```dart
@@ -66,11 +94,10 @@ class FlagManager {
   /// Prefetches and caches rules.
   ///
   /// Call this during app startup to warm up the SDK before first flag access.
+  /// The [contexts] are used for this fetch only; they are not kept for later
+  /// reads.
   Future<void> prefetch({List<Context>? contexts}) async {
-    if (contexts != null) {
-      withContexts(contexts);
-    }
-    await _getRulesJson();
+    await _getRulesJson(List<Context>.of(contexts ?? _contexts));
   }
 
   /// Evaluates a single flag by key
@@ -93,12 +120,16 @@ class FlagManager {
   /// }
   /// ```
   Future<Flag> single(String flagKey, {dynamic defaultValue}) async {
+    // Take this read's contexts now. The rules fetch below is async, and the
+    // contexts must not change under it if this manager is reused meanwhile.
+    final contexts = List<Context>.of(_contexts);
+
     // If the rules can't be loaded, serve the caller's default instead of
     // throwing. Without a default there is nothing to serve, so surface the
     // load error.
     String? rules;
     try {
-      rules = await _getRulesJson();
+      rules = await _getRulesJson(contexts);
     } on ZenmanageException {
       if (defaultValue == null) rethrow;
     }
@@ -108,7 +139,7 @@ class FlagManager {
         : _ruleEngine.evaluateFlag(
             flagKey: flagKey,
             rulesJson: rules,
-            contexts: _contexts.isNotEmpty ? _contexts : null,
+            contexts: contexts.isNotEmpty ? contexts : null,
             defaultValue: defaultValue,
           );
 
@@ -118,7 +149,7 @@ class FlagManager {
       unawaited(_apiClient.reportUsage(
         flagKey: flagKey,
         flagValue: flag.value,
-        context: _contexts.isNotEmpty ? _contexts.first : null,
+        context: contexts.isNotEmpty ? contexts.first : null,
         defaultValue: defaultValue,
       ));
 
@@ -132,7 +163,7 @@ class FlagManager {
       unawaited(_apiClient.reportUsage(
         flagKey: flagKey,
         flagValue: fallbackFlag.value,
-        context: _contexts.isNotEmpty ? _contexts.first : null,
+        context: contexts.isNotEmpty ? contexts.first : null,
         defaultValue: defaultValue,
       ));
 
@@ -172,11 +203,12 @@ class FlagManager {
   /// }
   /// ```
   Future<List<Flag>> all() async {
-    final rules = await _getRulesJson();
+    final contexts = List<Context>.of(_contexts);
+    final rules = await _getRulesJson(contexts);
 
     return _ruleEngine.evaluateAllFlags(
       rulesJson: rules,
-      contexts: _contexts.isNotEmpty ? _contexts : null,
+      contexts: contexts.isNotEmpty ? contexts : null,
     );
   }
 
@@ -204,28 +236,30 @@ class FlagManager {
   /// Clears the rules cache
   Future<void> clearCache() async {
     await _cache.clear();
-    _cachedRules = null;
-    _lastFetchTime = null;
+    _rules.cachedRules = null;
+    _rules.lastFetchTime = null;
   }
 
   /// Retrieves and caches rules from the API
-  Future<String> _getRulesJson() async {
+  Future<String> _getRulesJson(List<Context> contexts) async {
     // Check if we have fresh cached rules
-    if (_cachedRules != null &&
-        _lastFetchTime != null &&
-        DateTime.now().difference(_lastFetchTime!).inSeconds < _cacheTtl) {
-      return _cachedRules!;
+    final cached = _rules.cachedRules;
+    final fetchedAt = _rules.lastFetchTime;
+    if (cached != null &&
+        fetchedAt != null &&
+        DateTime.now().difference(fetchedAt).inSeconds < _cacheTtl) {
+      return cached;
     }
 
     // Try to fetch from API
     try {
       final response = await _apiClient.fetchRules(
-        contexts: _contexts.isNotEmpty ? _contexts : null,
+        contexts: contexts.isNotEmpty ? contexts : null,
       );
 
       final rulesJson = response['rules'] as String? ?? '';
-      _cachedRules = rulesJson;
-      _lastFetchTime = DateTime.now();
+      _rules.cachedRules = rulesJson;
+      _rules.lastFetchTime = DateTime.now();
 
       // Update persistent cache
       await _cache.setRules(rulesJson);
@@ -235,7 +269,7 @@ class FlagManager {
       // Fall back to persistent cache
       final cachedRules = await _cache.getRules();
       if (cachedRules != null && cachedRules.isNotEmpty) {
-        _cachedRules = cachedRules;
+        _rules.cachedRules = cachedRules;
         return cachedRules;
       }
 
