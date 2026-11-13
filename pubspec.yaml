@@ -1,6 +1,6 @@
 name: zenmanage
 description: Official Dart/Flutter SDK for Zenmanage feature flags with local evaluation. Control feature rollouts, A/B test, and manage configurations without deploying code.
-version: 1.0.0
+version: 1.0.1
 
 environment:
   sdk: '>=3.0.0 <4.0.0'

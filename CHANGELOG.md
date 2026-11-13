@@ -5,7 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## 1.0.1
+
+Released on 2026-11-13.
 
 ### Fixed
 - `single()` now returns the `defaultValue` you pass when the rules can't be loaded (for example an invalid key or no network) and nothing is cached. In 1.0.0 it threw an `ApiException` instead, even though the 1.0.0 notes said it wouldn't. Without a `defaultValue`, `single()` still throws.
